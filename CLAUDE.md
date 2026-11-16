@@ -6,4 +6,5 @@
 - 데이터 수정은 data/<slug>/*.json → `python3 tools/build.py [--pdf <slug>]` → `node tools/smoke.js`.
 - 페이지는 외부 요청 없이 동작해야 한다(데이터·그림 모두 저장소 안). 홈은 같은 사이트의 <slug>/card.json만 읽는다.
 - repeat 파트에는 변형 문항을 넣지 않는다. 내분비 gen.js 수정 후에는 정답 인덱스·선지 중복을 검사한다.
-- 시간표 파일(state/timetable.json, logs/timetable.log)은 auto/timetable 브랜치에서만 바꾼다(과목 PR과 충돌 방지).
+- 시간표 파일(state/timetable.json, logs/timetable.log)은 auto/timetable-vNNN PR에서만 바꾼다(과목 PR과 충돌 방지).
+- 이 환경에서는 원격 브랜치를 지울 수 없다. 브랜치 이름에 날짜·버전을 붙여 재사용하지 않고, 진행 여부는 열린 PR로 판단한다(tools/state.py).
