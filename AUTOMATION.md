@@ -23,7 +23,7 @@
 # add_repo 도구가 없으면: cd /home/user && git clone https://github.com/a6442337-crypto/med-quiz.git
 cd /home/user/med-quiz            # 클론한 위치
 git config user.name  "Claude (auto)"; git config user.email "noreply@anthropic.com"
-python3 -m pip install -q weasyprint==70.0 pyyaml openpyxl   # 'pip'만 쓰면 다른 파이썬에 설치될 수 있다
+python3 -m pip install -q weasyprint==70.0 pyyaml openpyxl pillow   # 'pip'만 쓰면 다른 파이썬에 설치될 수 있다
 apt-get install -y -q fonts-noto-cjk >/dev/null 2>&1 || (apt-get update -q && apt-get install -y -q fonts-noto-cjk)
 fc-list | grep -q "Noto Sans CJK KR" && echo 글꼴OK
 mkdir -p /tmp/work
