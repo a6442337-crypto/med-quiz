@@ -59,7 +59,12 @@ def check(slug):
     if var:  # 정답 위치 쏠림 경고 (변형 규칙: 고르게)
         cnt = [sum(1 for x in var if x['a'] == i) for i in range(5)]
         if max(cnt) > 0.4 * len(var) and len(var) >= 10: warns.append(f'{slug}: 변형 정답 위치 쏠림 {cnt}')
-    blob = json.dumps([meta, past, var], ensure_ascii=False)
+    trends = json.loads((d / 'trends.json').read_text()) if (d / 'trends.json').exists() else None
+    if trends is not None:
+        tprofs = {p.get('prof') for p in trends.get('profs', [])}
+        for p in tprofs - {c['prof'] for c in chs.values()}:
+            warns.append(f'{slug}: trends.json의 교수 {p}는 파트에 없음(표시 안 됨)')
+    blob = json.dumps([meta, past, var, trends], ensure_ascii=False)
     for w in FORBIDDEN:
         if w in blob: errs.append(f'{slug}: 금지어 "{w}" 포함')
     if not meta.get('verified') and any(x.get('ok') for x in past + var):
