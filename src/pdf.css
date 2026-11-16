@@ -33,3 +33,4 @@ ol.opts li { margin: 0.6pt 0; } ol.opts li span.c { display: inline-block; width
 table.dt { border-collapse: collapse; margin: 3pt auto; font-size: 8.6pt; }
 table.dt td, table.dt th { border: 0.6pt solid #ccc; padding: 1.5pt 5pt; text-align: center; } table.dt th { background: #e8eef8; }
 table.dt caption { caption-side: bottom; font-size: 8pt; color: #777; }
+.tag.k1 { background: #3b6fb6; } .tag.k2 { background: #2e7d4f; }
