@@ -63,7 +63,10 @@ def build_subject(slug):
     pdf = R / slug / pdf_name(meta)
     pdf_link = f'<a class="pdf" href="{html.escape(pdf.name)}" download>문제집 PDF</a>' if pdf.exists() else ''
     gen = R / 'data' / slug / 'gen.js'
-    data = json.dumps({'meta': {k: v for k, v in meta.items() if k != 'notes'}, 'q': qs}, ensure_ascii=False).replace('</', '<\\/')
+    tr = R / 'data' / slug / 'trends.json'  # 과목·교수님별 경향 분석 (선택, 페이지 맨 아래에 표시)
+    trends = json.loads(tr.read_text()) if tr.exists() else None
+    data = json.dumps({'meta': {k: v for k, v in meta.items() if k != 'notes'}, 'q': qs, 'trends': trends},
+                      ensure_ascii=False).replace('</', '<\\/')
     page = ((R / 'src/quiz.html').read_text()
             .replace('__NAME__', html.escape(meta['name'])).replace('__SUB__', sub).replace('__PDF__', pdf_link)
             .replace('__GEN__', gen.read_text() if gen.exists() else GEN_STUB).replace('__DATA__', data))

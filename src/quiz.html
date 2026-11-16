@@ -37,6 +37,10 @@ table.dt{border-collapse:collapse;margin:8px auto;font-size:13px}table.dt td,tab
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.hdr a.pdf{color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:4px 10px;font-size:12.5px;text-decoration:none;white-space:nowrap}
 .warn{border-left:4px solid #b07a12;background:#fbf4e6;border-radius:6px;padding:8px 12px;font-size:13px;margin-bottom:14px}
 .ex .lv{font-size:12px;color:var(--var);margin-top:4px}
+.tr h2{font-size:16px;margin:0 0 4px;color:var(--pri)}.tr .src{font-size:12px;color:var(--mute);margin-bottom:8px}
+.tr ul{margin:4px 0;padding-left:18px;font-size:13.5px}.tr li{margin:3px 0}
+.tr details{border-top:1px solid var(--line);padding:8px 0}.tr summary{cursor:pointer;font-weight:500;font-size:14px}
+.tr summary small{color:var(--mute);font-weight:400}.tr .cmp{font-size:12px;color:var(--mute);margin:4px 0 0 18px}
 </style></head><body>
 <header><div class="hdr"><div><a class="back" href="../">← 과목 선택</a><h1>__NAME__ 기출 퀴즈</h1><p>__SUB__</p></div>__PDF__</div></header>
 <main id="app"></main>
@@ -75,6 +79,15 @@ function build(){const p=pool();let q=st.order==='shuffle'?shuffle(p):p.slice();
  const dyn=dynamicQs(varyChs(),k);q=q.slice(0,total-dyn.length).concat(dyn);
  return st.order==='shuffle'?shuffle(q):q.sort((a,b)=>a.ch-b.ch)}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+/* 과목·교수님별 경향 분석 (data/<slug>/trends.json → D.trends). 교수님 순서는 파트 순서를 따른다 */
+function trendsHtml(){const T=D.trends;if(!T)return'';
+ const byP=Object.fromEntries((T.profs||[]).map(p=>[p.prof,p]));
+ const profs=[...new Set(M.ch.map(c=>c.prof))].filter(p=>byP[p]);
+ const cmp=p=>M.ch.filter(c=>c.prof===p).map(c=>`${MODEL[c.mode]||c.mode} — ${c.why||''}`)[0]||'';
+ return `<div class="panel tr"><h2>과목·교수님별 경향 분석</h2><div class="src">${esc(T.sources||'')}${T.updated?` (${esc(T.updated)} 정리)`:''}</div>
+ <ul>${(T.summary||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+ ${profs.map(p=>{const x=byP[p];const md=M.ch.find(c=>c.prof===p);return `<details><summary>${esc(p)} 교수님 <small>${esc(x.lectures||'')} · <span class="md ${isVary(md.mode)?'vary':''}">${MODEL[md.mode]||md.mode}</span></small></summary>
+ <ul>${(x.points||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><div class="cmp">연도 비교: ${esc(cmp(p))}</div></details>`}).join('')}</div>`}
 function home(){
  const p=pool();const nv=D.q.filter(x=>x.v).length;
  const rep=M.ch.filter(c=>c.mode==='repeat').map(c=>c.prof);const unv=D.q.filter(x=>!x.ok).length,dr=D.q.filter(x=>x.ok&&x.vb==='초안').length;
@@ -86,7 +99,7 @@ function home(){
  <span style="width:12px"></span>${[10,20,50,0].map(n=>`<button class="chip ${st.n===n?'on':''}" data-n="${n}">${n||'전부'}</button>`).join('')}</div>
  <div class="lbl">선지 순서</div><div class="row">${[[true,'섞기'],[false,'원래 순서']].map(([k,t])=>`<button class="chip ${st.mix===k?'on':''}" data-m="${k}">${t}</button>`).join('')}</div>
  <div class="row" style="margin-top:16px;justify-content:space-between"><span class="small">선택된 고정 문항 ${p.length}개${hasGen&&(st.kind==='all'||st.kind==='var')&&st.yrs.size===YEARS.length&&varyChs().size?' + 매번 새로 만드는 변형 문항':''}</span><button class="go" id="start" ${p.length?'':'disabled'}>시작</button></div></div>
- <div class="panel small">${rep.length?`<b>반복</b> 표시 교수님(${esc([...new Set(rep)].join('·'))})은 해마다 같은 문항을 거의 그대로 내셔서 기출만 나옵니다. `:''}<b>소폭 변형</b> 표시 교수님은 보기·수치·발문만 바꿔 내시고, <b>대폭 변형</b> 표시 교수님은 같은 개념을 다른 증례나 형식으로 내셔서, 그 수준에 맞춘 예상 변형 문항을 함께 실었습니다.<br>기출 문항의 연도 태그는 같은 선지·정답으로 출제된 해를 모두 표시합니다. 보라색 <b style="color:var(--var)">변형</b> 문항은 기출을 바탕으로 만든 예상 문제이고, 원본 문항 번호를 함께 표시합니다. 틀린 문제는 이 브라우저의 오답노트에 저장됩니다.</div>`;
+ <div class="panel small">${rep.length?`<b>반복</b> 표시 교수님(${esc([...new Set(rep)].join('·'))})은 해마다 같은 문항을 거의 그대로 내셔서 기출만 나옵니다. `:''}<b>소폭 변형</b> 표시 교수님은 보기·수치·발문만 바꿔 내시고, <b>대폭 변형</b> 표시 교수님은 같은 개념을 다른 증례나 형식으로 내셔서, 그 수준에 맞춘 예상 변형 문항을 함께 실었습니다.<br>기출 문항의 연도 태그는 같은 선지·정답으로 출제된 해를 모두 표시합니다. 보라색 <b style="color:var(--var)">변형</b> 문항은 기출을 바탕으로 만든 예상 문제이고, 원본 문항 번호를 함께 표시합니다. 틀린 문제는 이 브라우저의 오답노트에 저장됩니다.</div>${trendsHtml()}`;
  app.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;if(st.chs.size===M.ch.length){st.chs=new Set([c])}else{st.chs.has(c)?st.chs.delete(c):st.chs.add(c);if(!st.chs.size)st.chs=new Set(M.ch.map(c=>c.id))}home()});
  app.querySelector('[data-all]').onclick=()=>{st.chs=new Set(M.ch.map(c=>c.id));home()};
  app.querySelectorAll('[data-y]').forEach(b=>b.onclick=()=>{const y=+b.dataset.y;if(st.yrs.size===YEARS.length){st.yrs=new Set([y])}else{st.yrs.has(y)?st.yrs.delete(y):st.yrs.add(y);if(!st.yrs.size)st.yrs=new Set(YEARS)}home()});
