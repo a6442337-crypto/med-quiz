@@ -17,24 +17,26 @@
 ## 0. 준비 (매번)
 
 ```bash
-# 저장소: add_repo 도구로 a6442337-crypto/med-quiz 를 붙이고(access: push) 안내대로 클론한다.
+# 저장소: add_repo 도구가 있으면 a6442337-crypto/med-quiz 를 붙이고(access: push) 안내대로 클론한다.
+# add_repo 도구가 없으면: cd /home/user && git clone https://github.com/a6442337-crypto/med-quiz.git
 cd /home/user/med-quiz            # 클론한 위치
 git config user.name  "Claude (auto)"; git config user.email "noreply@anthropic.com"
-pip install -q weasyprint==70.0 pyyaml openpyxl
+python3 -m pip install -q weasyprint==70.0 pyyaml openpyxl   # 'pip'만 쓰면 다른 파이썬에 설치될 수 있다
 apt-get install -y -q fonts-noto-cjk >/dev/null 2>&1 || (apt-get update -q && apt-get install -y -q fonts-noto-cjk)
 fc-list | grep -q "Noto Sans CJK KR" && echo 글꼴OK
 mkdir -p /tmp/work
 ```
 - 커넥터 두 개가 필요하다.
-  - **Google Drive** (`mcp__Google_Drive__*`): 시간표 시트를 xlsx로 받을 때만 쓴다. 학과 드라이브 파일은 이 커넥터로 열 수 없다.
+  - **Google Drive** (`mcp__Google-Drive__*`, 환경에 따라 `mcp__Google_Drive__*`): 시간표 시트를 xlsx로 받을 때만 쓴다. 학과 드라이브 파일은 이 커넥터로 열 수 없다.
   - **drive-mcp** (`mcp__drive-mcp__search_drive`, `read_drive_file`, `get_hwp_image`): 학과 공유 드라이브(account `dept`)의 기출·학습부를 읽는다.
   - 둘 중 하나라도 없으면 아무것도 바꾸지 말고, 어느 커넥터가 없는지만 보고하고 끝낸다.
+- - `git push`가 권한 오류로 실패하면 커밋을 남긴 채 멈추고, 실패 메시지를 6단계 보고에 그대로 적는다.
 - Playwright·Chromium은 환경에 이미 있다(`node tools/smoke.js`에서 사용). 다시 설치하지 않는다.
 
 ## 1. 시간표 받기 · 버전 기록
 
-1. `mcp__Google_Drive__get_file_metadata(fileId="1xcH1X2AOqbEghejABgNL55EfL8zjOXB7AYVYJZ0IaB4", excludeContentSnippets=true)` → `title` (예: `v262_시간표_GY`).
-2. `mcp__Google_Drive__download_file_content(fileId=같은 ID, exportMimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")`
+1. `mcp__Google-Drive__get_file_metadata(fileId="1xcH1X2AOqbEghejABgNL55EfL8zjOXB7AYVYJZ0IaB4", excludeContentSnippets=true)` → `title` (예: `v262_시간표_GY`).
+2. `mcp__Google-Drive__download_file_content(fileId=같은 ID, exportMimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")`
    → 결과에 나온 저장 경로의 xlsx를 `/tmp/work/timetable.xlsx`로 복사한다. (CSV는 글자색이 없어 시험·휴일을 알 수 없으므로 반드시 xlsx로 받는다.)
 3. 버전 기록은 `auto/timetable` 브랜치에서 한다(과목 PR과 충돌하지 않게 시간표 파일은 이 브랜치에서만 바꾼다).
    ```bash
