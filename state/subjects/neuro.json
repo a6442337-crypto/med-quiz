@@ -1,0 +1,16 @@
+{
+ "status": "done",
+ "verified": false,
+ "years": [
+  2025,
+  2023,
+  2022,
+  2021,
+  2020
+ ],
+ "missing_years": [
+  2024
+ ],
+ "note": "2026 강의 자료 없음 → 미검증",
+ "updated": "2026-11-16"
+}
