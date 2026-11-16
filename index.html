@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>본과 2학년 기출 퀴즈</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--ink:#1f2633;--mute:#6b7385;--line:#e3e6ee;--pri:#1d3c6e;--pri2:#e8eef8;--var:#7a4bb3;--warn:#b07a12}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.6}
+header{background:var(--pri);color:#fff;padding:14px 18px}header h1{font-size:18px;margin:0}header p{margin:2px 0 0;font-size:12.5px;opacity:.8}
+main{max-width:820px;margin:0 auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.card h2{margin:0;font-size:17px}.card h2 a{color:var(--pri);text-decoration:none}.card h2 a:hover{text-decoration:underline}
+.meta{font-size:12.5px;color:var(--mute)}.badge{display:inline-block;font-size:11.5px;border-radius:4px;padding:0 6px;margin-right:4px;background:var(--pri2);color:var(--pri)}
+.badge.u{background:#fbf4e6;color:var(--warn)}.badge.d{background:var(--pri);color:#fff}
+.links{display:flex;gap:8px;margin-top:auto;padding-top:6px}.links a{font-size:13.5px;border-radius:8px;padding:6px 12px;text-decoration:none}
+.links a.go{background:var(--pri);color:#fff}.links a.pdf{border:1px solid var(--pri);color:var(--pri)}
+.lbl{font-size:12.5px;color:var(--mute);margin:18px 0 8px;font-weight:500}
+.up{background:var(--card);border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:13.5px;color:var(--mute);display:flex;justify-content:space-between;margin-bottom:6px}
+</style></head><body>
+<header><h1>본과 2학년 기출 퀴즈</h1><p>과목별 최근 5개년 복원 기출 + 교수님별 출제 경향에 맞춘 예상 변형 문항</p></header>
+<main><div class="grid" id="cards"></div><div id="up"></div></main>
+<script id="data" type="application/json">{"subjects": [{"slug": "hemonc", "name": "혈액종양학", "start": "2026-08-31", "exam": "2026-09-14", "auto": false}, {"slug": "forensic", "name": "법의학", "start": "2026-09-02", "exam": "2027-01-04", "auto": false}, {"slug": "cardio", "name": "순환기학", "start": "2026-09-14", "exam": "2026-10-06", "auto": false}, {"slug": "resp", "name": "호흡기학", "start": "2026-10-06", "exam": "2026-10-19", "auto": false}, {"slug": "repro", "name": "생식의학", "start": "2026-10-20", "exam": "2026-11-02", "auto": false}, {"slug": "rheum", "name": "알레르기-류마티스학", "start": "2026-11-02", "exam": "2026-11-09", "auto": false}, {"slug": "endo", "name": "내분비학", "start": "2026-11-09", "exam": "2026-11-16", "auto": false}, {"slug": "neuro", "name": "신경계학", "start": "2026-11-16", "exam": "2026-11-30", "auto": true}, {"slug": "medinfo", "name": "의료정보학", "start": "2026-11-20", "exam": "2026-12-24", "auto": true}, {"slug": "sensory", "name": "감각계학", "start": "2026-11-30", "exam": "2026-12-14", "auto": true}, {"slug": "fever", "name": "발열", "start": "2026-12-01", "exam": "2027-01-05", "auto": true}, {"slug": "msk", "name": "근골격학", "start": "2026-12-14", "exam": "2026-12-23", "auto": true}, {"slug": "cp2", "name": "임상표현2", "start": "2026-12-28", "exam": "2027-01-04", "auto": true}]}</script>
+<script>
+const D=JSON.parse(document.getElementById('data').textContent);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today=new Date();today.setHours(0,0,0,0);
+const dday=s=>{if(!s)return'';const d=Math.round((new Date(s+'T00:00:00')-today)/864e5);return d>0?`D-${d}`:d===0?'D-day':'시험 끝'};
+const md=s=>s?`${+s.slice(5,7)}/${+s.slice(8)}`:'';
+const ended=s=>dday(s)==='시험 끝';
+Promise.all(D.subjects.map(s=>fetch(`${s.slug}/card.json`,{cache:'no-cache'}).then(r=>r.ok?r.json():null).catch(()=>null))).then(cs=>{
+ const cards=cs.map((c,i)=>c&&Object.assign({exam:D.subjects[i].exam},c)).filter(Boolean)
+  .sort((a,b)=>ended(a.exam)-ended(b.exam)||String(a.exam).localeCompare(String(b.exam)));
+ document.getElementById('cards').innerHTML=cards.map(c=>`<div class="card">
+<h2><a href="${c.slug}/">${esc(c.name)}</a></h2>
+<div>${c.exam?`<span class="badge d">${dday(c.exam)}</span>`:''}${c.verified?'':'<span class="badge u">미검증</span>'}<span class="badge">${c.years.length?c.years[0]+'–'+c.years[c.years.length-1]:''}</span></div>
+<div class="meta">기출 ${c.past}문항${c.var?` · 변형 ${c.var}문항`:''}${c.exam?` · 시험 ${md(c.exam)}`:''}${c.updated?` · ${md(c.updated)} 갱신`:''}</div>
+<div class="links"><a class="go" href="${c.slug}/">퀴즈 풀기</a>${c.pdf?`<a class="pdf" href="${encodeURI(c.pdf)}" download>문제집 PDF</a>`:''}</div></div>`).join('')||'<div class="up">아직 올라온 과목이 없습니다.</div>';
+ const built=new Set(cards.map(c=>c.slug));
+ const up=D.subjects.filter(s=>s.auto&&!built.has(s.slug)&&s.start&&!ended(s.exam));
+ document.getElementById('up').innerHTML=up.length?`<div class="lbl">준비 중 (과목 시작일에 자동으로 만들어집니다)</div>`+up.map(u=>`<div class="up"><span>${esc(u.name)}</span><span>시작 ${md(u.start)}${u.exam?` · 시험 ${md(u.exam)}`:''}</span></div>`).join(''):'';
+});
+</script></body></html>

@@ -1,0 +1,16 @@
+{
+ "status": "done",
+ "verified": true,
+ "years": [
+  2025,
+  2023,
+  2022,
+  2021,
+  2020
+ ],
+ "missing_years": [
+  2024
+ ],
+ "note": "endo-quiz에서 옮김",
+ "updated": "2026-11-16"
+}
