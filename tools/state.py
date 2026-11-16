@@ -8,8 +8,9 @@
   state/sources/<slug>.json   {file_id: {name, account, kind, year, read}}
      kind: past(기출 복원) | guide(26 학습부) | other
 
-진행 중인 작업은 상태 파일이 아니라 원격 브랜치 auto/<slug>(새 과목) ·
-auto/<slug>-verify(재검증)로 판단한다. PR이 머지되기 전까지 main의 상태 파일은
+진행 중인 작업은 상태 파일이 아니라 **열린 PR**로 판단한다(머리 브랜치 auto/<slug>-YYYYMMDD 새 과목 ·
+auto/<slug>-verify-YYYYMMDD 재검증). 이 환경에서는 원격 브랜치를 지울 수 없어 머지된 브랜치가 남으므로
+브랜치 존재 여부로는 판단하지 않는다. PR이 머지되기 전까지 main의 상태 파일은
 바뀌지 않으므로, 브랜치가 있으면 '진행 중(검토 대기)'으로 보고 다시 만들지 않는다.
 
 사용법
@@ -21,7 +22,7 @@ auto/<slug>-verify(재검증)로 판단한다. PR이 머지되기 전까지 main
   python3 tools/state.py sources <slug>          이미 읽은 파일 목록
   python3 tools/state.py seen <slug> <file_id>   읽은 파일이면 exit 0, 아니면 1
 """
-import argparse, json, subprocess, sys
+import argparse, json, re, subprocess, sys
 from common import R, load_config, subject, jload, jsave, today_kst
 
 
@@ -34,13 +35,22 @@ def load_sources(slug):
     return jload(f'state/sources/{slug}.json', {})
 
 
-def remote_branches():
-    try:
-        out = subprocess.run(['git', '-C', str(R), 'ls-remote', '--heads', 'origin', 'auto/*'],
-                             capture_output=True, text=True, timeout=60).stdout
-    except Exception as e:  # 네트워크 문제면 안전하게 아무것도 안 함
-        sys.exit(f'원격 브랜치를 확인하지 못했습니다: {e}')
-    return {l.split('refs/heads/')[1] for l in out.splitlines() if 'refs/heads/' in l}
+def open_pr_heads():
+    """열린 PR의 머리 브랜치 이름 집합 (gh api, REST)."""
+    url = subprocess.run(['git', '-C', str(R), 'remote', 'get-url', 'origin'], capture_output=True, text=True).stdout.strip()
+    m = re.search(r'github\.com[/:]([^/]+/[^/.]+)', url)
+    if not m:
+        sys.exit(f'origin 원격 주소를 알 수 없습니다: {url!r}')
+    r = subprocess.run(['gh', 'api', f'repos/{m.group(1)}/pulls?state=open&per_page=100', '--jq', '.[].head.ref'],
+                       capture_output=True, text=True, timeout=60)
+    if r.returncode:
+        sys.exit(f'열린 PR 목록을 가져오지 못했습니다: {r.stderr.strip()}')
+    return set(r.stdout.split())
+
+
+def busy_for(heads, slug, verify=False):
+    pre = f'auto/{slug}-verify' if verify else f'auto/{slug}'
+    return any(h == pre or (h.startswith(pre + '-') and (verify or '-verify' not in h)) for h in heads)
 
 
 def due(today, forced=None):
@@ -49,13 +59,13 @@ def due(today, forced=None):
     if not tt:
         sys.exit('state/timetable.json이 없습니다. 먼저 tools/timetable.py parse를 실행하세요.')
     st = load_states()
-    busy = remote_branches()
+    heads = open_pr_heads()
     info = tt['subjects']
     if forced:
         s = subject(cfg, forced)
         slug = s['slug']
-        if f'auto/{slug}' in busy:
-            return {'action': 'none', 'reason': f'auto/{slug} 브랜치가 이미 있습니다(검토 대기 PR). 머지/삭제 후 다시 실행하세요.'}
+        if busy_for(heads, slug) or busy_for(heads, slug, True):
+            return {'action': 'none', 'reason': f'{slug}의 열린 PR이 있습니다(검토 대기). 머지하거나 닫은 뒤 다시 실행하세요.'}
         kind = 'reverify' if st.get(slug, {}).get('status') == 'done' and not st[slug].get('verified') else 'new'
         return {'action': kind, 'slug': slug, 'name': s['name'], **(info.get(slug) or {}), 'manual': True}
     cands = []
@@ -65,7 +75,7 @@ def due(today, forced=None):
             continue
         if i['start'] < cfg['go_live'] or i['start'] > today:
             continue
-        if st.get(s['slug'], {}).get('status') in ('done', 'skipped') or f"auto/{s['slug']}" in busy:
+        if st.get(s['slug'], {}).get('status') in ('done', 'skipped') or busy_for(heads, s['slug']):
             continue
         if i.get('exam') and i['exam'] < today:
             continue  # 시험이 이미 지난 과목은 만들지 않음
@@ -78,7 +88,7 @@ def due(today, forced=None):
     # 새 과목이 없으면 미검증 과목 중 하나(시험이 안 지난 것 우선)를 재검증 후보로
     rv = []
     for slug, v in st.items():
-        if v.get('status') == 'done' and not v.get('verified') and f'auto/{slug}-verify' not in busy:
+        if v.get('status') == 'done' and not v.get('verified') and not busy_for(heads, slug) and not busy_for(heads, slug, True):
             i = info.get(slug) or {}
             rv.append((i.get('exam') or '9999', slug, i))
     rv.sort()
