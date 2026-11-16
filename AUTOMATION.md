@@ -42,7 +42,7 @@ mkdir -p /tmp/work
    if git ls-remote --exit-code --heads origin auto/timetable >/dev/null; then git checkout -B auto/timetable origin/auto/timetable; else git checkout -B auto/timetable origin/main; fi
    python3 tools/timetable.py parse /tmp/work/timetable.xlsx --title "<1에서 받은 title>"
    ```
-   - 출력이 `버전 변경 기록:`이면 `python3 tools/build.py`로 홈을 다시 만든 뒤 `state/timetable.json logs/timetable.log index.html`만 커밋·푸시한다. 열린 PR이 없으면 PR을 만든다(제목 `시간표 버전 기록 (vNNN)`, 본문에 logs 마지막 줄).
+   - 출력이 `버전 변경 기록:`이면 `python3 tools/build.py`로 홈을 다시 만든 뒤 `state/timetable.json logs/timetable.log index.html`만 커밋·푸시한다. 열린 PR이 없으면(3-11의 확인 명령으로 `auto/timetable` 검사) 3-11과 같은 REST 방식으로 PR을 만든다(제목 `시간표 버전 기록 (vNNN)`, 본문에 logs 마지막 줄).
    - `버전 그대로:`이면 커밋하지 않는다.
    - `⚠ config/subjects.yaml에 없는 접두어`가 나오면, 그 접두어가 새 과목이면 6단계 보고에 적는다(설정을 마음대로 추가하지 않는다).
 4. `git checkout main && git pull` 후 같은 parse 명령을 한 번 더 실행해 작업 트리에 최신 `state/timetable.json`을 둔다. 이 파일과 `logs/timetable.log`, `index.html`은 과목 PR에 넣지 않는다(커밋 전에 `git checkout -- state/timetable.json logs/timetable.log index.html`).
@@ -177,8 +177,11 @@ git add data/<slug> <slug> reports/<slug>.md state/subjects/<slug>.json state/so
 git status --short          # 위 경로 말고 다른 파일이 들어가지 않았는지 확인
 git commit -m "<과목명> 기출 퀴즈 추가 (기출 N·변형 M, 검증|미검증)"
 git -c push.negotiate=true push -u origin auto/<slug>
-gh pr create --base main --head auto/<slug> --title "<과목명> 기출 퀴즈 추가" --body-file /tmp/work/pr.md
+python3 -c "import json;print(json.dumps({'title':'<과목명> 기출 퀴즈 추가','head':'auto/<slug>','base':'main','body':open('/tmp/work/pr.md').read()}))" > /tmp/work/pr.json
+gh api repos/a6442337-crypto/med-quiz/pulls --input /tmp/work/pr.json --jq .html_url
 ```
+- `gh pr create`는 이 환경에서 GraphQL이 막혀 실패한다. PR은 항상 위처럼 REST(`gh api …/pulls`)로 만든다.
+- 같은 브랜치의 열린 PR이 있는지: `gh api "repos/a6442337-crypto/med-quiz/pulls?state=open&head=a6442337-crypto:auto/<slug>" --jq '.[].html_url'`
 PR 본문(`/tmp/work/pr.md`):
 - 요약 3줄: 문항 수, 연도, 검증 여부
 - 교수님별 변형 판단 요약(반복/소폭/대폭 교수님 이름)
