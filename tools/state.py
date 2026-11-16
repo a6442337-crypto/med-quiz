@@ -4,7 +4,9 @@
 상태 파일 (과목마다 파일 하나 → 동시에 열린 PR끼리 충돌하지 않음)
   state/subjects/<slug>.json  {status, verified, years, missing_years, pr, updated, note}
      status: done(PR까지 올림) | skipped(만들지 않음)
-     verified: true(26 학습부로 정답 검증) | false(미검증 → 학습부가 올라오면 재검증)
+     verified: true(모든 문항을 올해 강의 자료로 검증) | false(미검증 문항이 있음)
+     level: 검안(모든 문항을 검안으로 검증) | 초안(초안으로 검증한 문항이 있음) | null
+     → verified가 false이거나 level이 초안이면 시험일까지 매일 재검증 후보(검안본·새 강의 자료 확인)
   state/sources/<slug>.json   {file_id: {name, account, kind, year, read}}
      kind: past(기출 복원) | guide(26 학습부) | other
 
@@ -66,7 +68,8 @@ def due(today, forced=None):
         slug = s['slug']
         if busy_for(heads, slug) or busy_for(heads, slug, True):
             return {'action': 'none', 'reason': f'{slug}의 열린 PR이 있습니다(검토 대기). 머지하거나 닫은 뒤 다시 실행하세요.'}
-        kind = 'reverify' if st.get(slug, {}).get('status') == 'done' and not st[slug].get('verified') else 'new'
+        sv = st.get(slug, {})
+        kind = 'reverify' if sv.get('status') == 'done' and (not sv.get('verified') or sv.get('level') == '초안') else 'new'
         return {'action': kind, 'slug': slug, 'name': s['name'], **(info.get(slug) or {}), 'manual': True}
     cands = []
     for s in cfg['subjects']:
@@ -88,8 +91,11 @@ def due(today, forced=None):
     # 새 과목이 없으면 미검증 과목 중 하나(시험이 안 지난 것 우선)를 재검증 후보로
     rv = []
     for slug, v in st.items():
-        if v.get('status') == 'done' and not v.get('verified') and not busy_for(heads, slug) and not busy_for(heads, slug, True):
+        if v.get('status') == 'done' and (not v.get('verified') or v.get('level') == '초안') \
+                and not busy_for(heads, slug) and not busy_for(heads, slug, True):
             i = info.get(slug) or {}
+            if i.get('exam') and i['exam'] < today:
+                continue  # 시험이 지난 과목은 재검증하지 않음
             rv.append((i.get('exam') or '9999', slug, i))
     rv.sort()
     if rv:
@@ -106,7 +112,8 @@ def main():
     p = sp.add_parser('due'); p.add_argument('--today'); p.add_argument('--subject')
     sp.add_parser('show')
     p = sp.add_parser('set'); p.add_argument('slug'); p.add_argument('--status')
-    p.add_argument('--verified', choices=['true', 'false']); p.add_argument('--years')
+    p.add_argument('--verified', choices=['true', 'false']); p.add_argument('--level', choices=['초안', '검안', 'none'])
+    p.add_argument('--years')
     p.add_argument('--missing'); p.add_argument('--pr'); p.add_argument('--note')
     p = sp.add_parser('source'); p.add_argument('slug'); p.add_argument('file_id')
     p.add_argument('--name', required=True); p.add_argument('--account', default='dept')
@@ -123,6 +130,7 @@ def main():
         v = jload(f'state/subjects/{slug}.json', {})
         if a.status: v['status'] = a.status
         if a.verified: v['verified'] = a.verified == 'true'
+        if a.level: v['level'] = None if a.level == 'none' else a.level
         if a.years is not None: v['years'] = [int(x) for x in a.years.split(',') if x]
         if a.missing is not None: v['missing_years'] = [int(x) for x in a.missing.split(',') if x]
         if a.pr: v['pr'] = a.pr

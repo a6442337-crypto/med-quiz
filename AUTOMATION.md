@@ -62,7 +62,7 @@ python3 tools/state.py due --subject 신경계학     # 수동 실행 (프롬프
 결과 `action`에 따라 다음 단계로 간다.
 - `none`: 할 일이 없다. 1단계 결과만 짧게 보고하고 **끝낸다**.
 - `new`: 새 과목 처리 → 3단계. `waiting`에 다른 과목이 있으면 내일로 넘어간다는 사실만 보고한다.
-- `reverify-check`: 새 과목이 없을 때의 미검증 과목 확인 → 5단계.
+- `reverify-check`: 새 과목이 없을 때, 미검증 문항이 있거나 초안으로 검증한 문항이 있는 과목(시험 전) 확인 → 5단계.
 
 `due`는 다음을 알아서 판단한다.
 - 시작일 ≤ 오늘 ≤ 시험일인 과목 가운데 `config/subjects.yaml`에서 `auto: true`인 것
@@ -140,12 +140,15 @@ python3 tools/assemble.py <slug> $W            # → data/<slug>/past.json, meta
    - 강의 자료 기준으로 정답을 다시 판단한다. 복원 답과 다르면 `a`, `A`를 고치고 `N`에 "복원 답 ③과 다름 — 2026년 강의 기준 ⑤"처럼 적는다(`ra`는 복원 답 그대로 둔다).
    - `E`는 강의 내용을 근거로 다시 쓴다. 정답 이유와 주요 오답 이유를 쓰되, 학습부 문장을 그대로 옮기지 말고 요약한다. '학습부', 학생 이름, "OO 학우" 같은 표현은 넣지 않는다.
    - `B`는 `관련 강의: 강의 NN 강의명`으로 둔다(assemble이 넣어 준다). 강의 자료에 근거가 없으면 `B`에 "웹 자료(출처명)"를 덧붙이고 일반 의학 지식으로 판단한다.
-   - 검증한 문항은 `ok:true`로 한다. 모든 문항이 `ok:true`가 되면 `meta.verified:true`로 한다. 강의 자료가 일부만 올라왔으면 나머지는 `ok:false`로 둔다.
+   - 검증한 문항은 `ok:true`와 함께 **`vb`에 검증에 쓴 자료 판을 적는다**: 검안으로 검증했으면 `"vb":"검안"`, 초안으로 검증했으면 `"vb":"초안"`. 미검증 문항(`ok:false`)에는 `vb`를 넣지 않는다. 사이트·PDF에 문항마다 '초안 검증'/'검안 검증'/'미검증'이 표시되고, 과목 표시는 가장 약한 쪽을 따른다(하나라도 초안이면 '초안 검증', 미검증이 섞이면 '일부 검증').
+   - 같은 강의에 초안과 검안이 둘 다 있으면 반드시 검안으로 검증한다. 초안만 있으면 초안으로 검증하고 `vb:"초안"`으로 둔다.
+   - 모든 문항이 `ok:true`가 되면 `meta.verified:true`로 한다. 강의 자료가 일부만 올라왔으면 나머지는 `ok:false`로 둔다.
+   - 강의 자료를 기록할 때 판을 이름에 넣는다: `state.py source <slug> <file_id> --kind guide --name "강의 NN 검안"` (또는 `"강의 NN 초안"`).
 
 ### 3-7. 변형문제
 `docs/variation-rules.md` §3을 그대로 따른다.
 - `data/<slug>/variants.json`에 쓴다. repeat 파트는 만들지 않는다. 정답 위치를 고르게 하고, `vn`에 바꾼 내용을 적는다.
-- 강의 자료로 확인했으면 `ok:true`, 아니면 `ok:false`로 둔다.
+- 강의 자료로 확인했으면 `ok:true`와 `vb`(초안|검안), 아니면 `ok:false`로 둔다.
 
 ### 3-8. meta.json
 assemble이 `ch`와 `years`를 채운다. 나머지는 직접 채운다(neuro 참고).
@@ -177,7 +180,8 @@ grep -rl "학습부" data/<slug> <slug> reports/<slug>.md && echo "금지어 있
 
 ### 3-11. 상태 기록 · 커밋 · PR
 ```bash
-python3 tools/state.py set <slug> --status done --verified <true|false> --years 2025,2023,… --missing 2024
+python3 tools/state.py set <slug> --status done --verified <true|false> --level <검안|초안|none> --years 2025,2023,… --missing 2024
+# --level: 모든 문항이 검안 검증이면 검안, 초안 검증 문항이 하나라도 있으면 초안, 검증된 문항이 없으면 none
 git checkout -- state/timetable.json logs/timetable.log index.html 2>/dev/null
 git add data/<slug> <slug> reports/<slug>.md state/subjects/<slug>.json state/sources/<slug>.json
 git status --short          # 위 경로 말고 다른 파일이 들어가지 않았는지 확인
@@ -202,13 +206,19 @@ PR 본문(`/tmp/work/pr.md`):
 - `재검증: 신경계학` → 5단계.
 - `재판단: 내분비학` → 3-3~3-5를 다시 해 교수님별 판단만 3단계로 갱신하고 리포트와 PR을 만든다.
 
-## 5. 미검증 과목 재검증 (`action: reverify-check` 또는 `재검증: …`)
+## 5. 재검증 (`action: reverify-check` 또는 `재검증: …`)
 
-1. `search_drive`로 그 과목의 2026년 강의 자료(3-6의 1)를 찾는다. 새로 올라온 파일이 없으면(`state.py seen`으로 확인) "아직 없음"이라고 보고하고 **끝낸다**.
+대상: 미검증 문항이 있거나(`verified:false`) 초안으로 검증한 문항이 있는(`level:초안`) 과목. 시험일이 지나면 하지 않는다.
+
+1. `search_drive`로 그 과목의 2026년 강의 자료(3-6의 1)를 찾는다. 할 일이 생기는 경우는 둘이다(이미 읽은 파일은 `state.py seen`/`sources`로 확인).
+   - **새 강의 자료**: 미검증 문항(`ok:false`)이 있는 강의의 초안 또는 검안이 새로 올라옴
+   - **검안본 도착**: 초안으로 검증한(`vb:"초안"`) 문항이 있는 강의의 검안이 새로 올라옴
+   둘 다 없으면 "아직 없음"이라고 보고하고 **끝낸다**.
 2. 있으면 `git checkout -B auto/<slug>-verify-$D origin/main`을 하고, 3-6의 3을 **그 강의에 해당하는 문항과 변형문항에만** 수행한다. 변형문항 정답도 확인한다.
+   - 검안본 도착이면 그 강의의 `vb:"초안"` 문항을 검안으로 다시 풀어 보고, 바뀐 정답·해설을 고친 뒤 `vb:"검안"`으로 바꾼다. 정답이 그대로여도 `vb`는 검안으로 바꾼다. 초안과 정답이 달라진 문항은 `N`에 "초안 기준 ③ → 검안 기준 ⑤"처럼 적는다.
 3. `meta.updated`를 오늘로 바꾸고, 모두 검증되면 `meta.verified:true`로 한다. notes의 "미검증판" 문구는 상태에 맞게 고친다.
-4. 3-9 빌드·확인을 하고, 리포트에 "재검증 (날짜)" 절을 추가한다(바뀐 정답 목록 포함). `state.py set <slug> --verified true|false`.
-5. 커밋하고 PR을 만든다(제목 `<과목명> 정답 재검증 (강의 자료 반영)`).
+4. 3-9 빌드·확인을 하고, 리포트에 "재검증 (날짜)" 절을 추가한다(바뀐 정답 목록 포함). `state.py set <slug> --verified true|false --level 검안|초안|none` (3-11 기준).
+5. 커밋하고 PR을 만든다(제목 `<과목명> 정답 재검증 (강의 자료 반영)`, 검안본만 반영했으면 `<과목명> 검안본 반영`). PR 본문에 검안·초안·미검증 문항 수를 적는다.
 
 ## 6. 마지막 보고 (세션 끝 메시지)
 

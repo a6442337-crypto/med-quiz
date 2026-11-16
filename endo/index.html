@@ -33,7 +33,7 @@ table.dt{border-collapse:collapse;margin:8px auto;font-size:13px}table.dt td,tab
 .score{font-size:30px;font-weight:700;color:var(--pri)}
 .wl{font-size:13.5px}.wl div{padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}.wl div:hover{color:var(--pri)}
 .small{font-size:12.5px;color:var(--mute)}
-.tags span.y{background:#fff;color:var(--pri);border:1px solid var(--pri)}.tags span.u{background:#b07a12}.back{color:#fff;opacity:.8;font-size:12.5px;text-decoration:none}.back:hover{opacity:1}
+.tags span.y{background:#fff;color:var(--pri);border:1px solid var(--pri)}.tags span.u{background:#b07a12}.tags span.k1{background:#3b6fb6}.tags span.k2{background:#2e7d4f}.back{color:#fff;opacity:.8;font-size:12.5px;text-decoration:none}.back:hover{opacity:1}
 .hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.hdr a.pdf{color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:6px;padding:4px 10px;font-size:12.5px;text-decoration:none;white-space:nowrap}
 .warn{border-left:4px solid #b07a12;background:#fbf4e6;border-radius:6px;padding:8px 12px;font-size:13px;margin-bottom:14px}
 .ex .lv{font-size:12px;color:var(--var);margin-top:4px}
@@ -209,8 +209,8 @@ function build(){const p=pool();let q=st.order==='shuffle'?shuffle(p):p.slice();
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function home(){
  const p=pool();const nv=D.q.filter(x=>x.v).length;
- const rep=M.ch.filter(c=>c.mode==='repeat').map(c=>c.prof);const unv=D.q.filter(x=>!x.ok).length;
- app.innerHTML=`${unv?`<div class="warn"><b>미검증</b> 문항 ${unv}개: 2026년 강의 자료가 아직 없어 복원 해설의 답을 그대로 실었습니다. 강의 자료가 올라오면 다시 검증합니다.</div>`:''}<div class="panel"><div class="lbl">파트 (2026 담당)</div><div class="row" id="chs">
+ const rep=M.ch.filter(c=>c.mode==='repeat').map(c=>c.prof);const unv=D.q.filter(x=>!x.ok).length,dr=D.q.filter(x=>x.ok&&x.vb==='초안').length;
+ app.innerHTML=`${unv?`<div class="warn"><b>미검증</b> 문항 ${unv}개: 2026년 강의 자료가 아직 없어 복원 해설의 답을 그대로 실었습니다. 강의 자료가 올라오면 다시 검증합니다.</div>`:''}${dr?`<div class="warn" style="border-color:#3b6fb6;background:#eef3fb"><b>초안으로 검증됨</b> 문항 ${dr}개: 검안본이 올라오면 다시 확인합니다.</div>`:''}<div class="panel"><div class="lbl">파트 (2026 담당)</div><div class="row" id="chs">
  <button class="chip ${st.chs.size===M.ch.length?'on':''}" data-all>전체</button>${M.ch.map(c=>`<button class="chip ${st.chs.has(c.id)?'on':''}" data-c="${c.id}" title="${esc(c.why||'')}">${esc(c.title.replace(/^[^.]+\.\s*/,''))} · ${esc(c.prof)} <small class="md ${isVary(c.mode)?'vary':''}">${MODEL[c.mode]||c.mode}</small></button>`).join('')}</div>
  ${YEARS.length>1?`<div class="lbl">출제 연도</div><div class="row">${YEARS.map(y=>`<button class="chip ${st.yrs.has(y)?'on':''}" data-y="${y}">${y}</button>`).join('')}</div>`:''}
  <div class="lbl">문제 종류</div><div class="row" id="kind">${[['all','기출+변형'],['past','기출(원본)만'],...(nv||hasGen?[['var','변형만']]:[]),['wrong',`오답노트 (${wrong.size+Object.keys(wdyn).length})`]].map(([k,t])=>`<button class="chip ${st.kind===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>
@@ -229,7 +229,9 @@ function home(){
  $('#start').onclick=()=>{run={q:build(),i:0,ans:{}};show()};
 }
 function baseTag(x){const b=byId[x.base];return b?`원본 ${b.keys.map(k=>`20${k.slice(0,2)} #${k.slice(3).replace('-1','')}`).join(', ')}`:(x.N||'')}
-function tags(x){const u=x.ok===false?'<span class="u">미검증</span>':'';
+/* 검증 표시: ok=false → 미검증, vb='초안'|'검안' → 그 자료로 검증, vb 없음(옛 데이터) → 검증 */
+const VL=x=>x.ok===false?'미검증':(x.vb?x.vb+'으로 검증됨':'검증됨');
+function tags(x){const u=`<span class="${x.ok===false?'u':(x.vb==='초안'?'k1':'k2')}">${x.ok===false?'미검증':(x.vb?x.vb+' 검증':'검증')}</span>`;
  if(x.v)return `<span class="v">변형${x.lv?' · '+(LVL[x.lv]||x.lv):''}</span>${u}<span class="g">${esc(x.dyn?x.N:baseTag(x))}</span>`;
  return x.keys.map(k=>`<span>20${k.slice(0,2)} #${k.slice(3).replace('-1','')}</span>`).join('')+'<span class="y">원본</span>'+u+`<span class="g">${esc(x.g)}</span>`}
 function show(){
@@ -241,7 +243,7 @@ function show(){
  <div class="tags">${tags(x)}</div><div class="stem">${x.stem}</div>
  ${(x.img||[]).map(s=>`<div class="img"><img src="${s}" alt="문항 그림"></div>`).join('')}
  <div>${P.map((i,pos)=>`<button class="opt ${done?(i===x.a?'ok':(i===a?'bad':'')):''}" data-i="${i}" ${done?'disabled':''}><b>${CIR[pos]}</b>${esc(x.o[i])}${done&&moved?`<span class="orig">원래 ${CIR[i]}</span>`:''}</button>`).join('')}</div>
- ${done?`<div class="ex ${a===x.a?'':'wrong'}"><div class="h">${a===x.a?'맞았습니다':'틀렸습니다'} · 정답 ${CIR[P.indexOf(x.a)]}${moved?` <span class="origh">(원래 번호 ${x.v?CIR[x.a]:esc(x.A)} · 해설의 선지 번호는 원래 순서 기준)</span>`:(x.v?'':(x.A&&x.A.length>1?` <span class="origh">${esc(x.A)}</span>`:''))}</div><div>${esc(x.E)}</div>${x.N&&!x.v?`<div class="note">※ ${esc(x.N)}</div>`:''}${x.v&&!x.dyn&&x.N?`<div class="lv">${esc(x.N)}</div>`:''}${x.ok===false?'<div class="note">※ 미검증: 복원 해설 기준 답입니다.</div>':''}${x.B?`<div class="src">근거: ${esc(x.B)}</div>`:''}</div>`:''}
+ ${done?`<div class="ex ${a===x.a?'':'wrong'}"><div class="h">${a===x.a?'맞았습니다':'틀렸습니다'} · 정답 ${CIR[P.indexOf(x.a)]}${moved?` <span class="origh">(원래 번호 ${x.v?CIR[x.a]:esc(x.A)} · 해설의 선지 번호는 원래 순서 기준)</span>`:(x.v?'':(x.A&&x.A.length>1?` <span class="origh">${esc(x.A)}</span>`:''))}</div><div>${esc(x.E)}</div>${x.N&&!x.v?`<div class="note">※ ${esc(x.N)}</div>`:''}${x.v&&!x.dyn&&x.N?`<div class="lv">${esc(x.N)}</div>`:''}${x.ok===false?'<div class="note">※ 미검증: 복원 해설 기준 답입니다.</div>':(x.vb==='초안'?'<div class="small">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>':(x.vb?'<div class="small">검안으로 검증됨</div>':''))}${x.B?`<div class="src">근거: ${esc(x.B)}</div>`:''}</div>`:''}
  <div class="nav"><button class="ghost" id="home">처음으로</button><span><button class="ghost" id="prev" ${run.i?'':'disabled'}>이전</button> <button class="go" id="next" ${done?'':'disabled'}>${run.i+1<run.q.length?'다음':'결과 보기'}</button></span></div></div>`;
  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;run.ans[x.id]=i;if(x.dyn){if(i===x.a)delete wdyn[x.id];else wdyn[x.id]=x;LS.set('wrong_dyn',wdyn)}else{if(i===x.a)wrong.delete(x.id);else wrong.add(x.id);LS.set('wrong',[...wrong])}show()});
  $('#home').onclick=home;$('#prev').onclick=()=>{run.i--;show()};
