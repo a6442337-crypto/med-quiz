@@ -6,7 +6,7 @@
 > 기출 수집 → 문항 데이터 → 문제집 PDF → 퀴즈 페이지 → (변형 출제 교수님 문항은) 변형문제
 
 **절대 규칙**
-1. `main`에 직접 커밋·푸시하지 않는다. 결과는 항상 `auto/…` 브랜치 + PR. 사용자가 검토하고 머지하면 GitHub Pages에 배포된다.
+1. `main`에 직접 커밋·푸시하지 않는다. 결과는 항상 `auto/…` 브랜치 + PR로 올리고, **검사를 통과하면 스스로 머지한다**(3-12). 머지되면 GitHub Pages에 배포된다. 사용자가 매일 사이트를 보다가 오류를 알려 주면 그때 고친다(2026-11-17 사용자 결정).
    - 이 환경에서는 원격 브랜치를 **지울 수 없다**(403). 그래서 브랜치 이름에 날짜·버전을 붙여 매번 새 이름을 쓰고, 이미 있는 브랜치를 다시 쓰지 않는다. 진행 중인지 여부는 브랜치가 아니라 **열린 PR**로 판단한다.
    - 오늘 날짜는 `D=$(TZ=Asia/Seoul date +%Y%m%d)`로 만든다.
 2. 근거에 **학습부 출처 표기는 해도 된다**(예: `26 학습부 03번 · 갑상선기능검사`). 단 사이트·PDF·데이터·커밋 메시지·PR 본문 어디에도 **학습부 담당 학생 이름, 전화번호, 학습부 사진**은 넣지 않는다. 해설에는 근거 *내용*을 정리해 쓴다.
@@ -43,7 +43,7 @@ mkdir -p /tmp/work
 3. 버전 기록은 `auto/timetable-<버전>` 브랜치 PR로 한다(과목 PR과 충돌하지 않게 시간표 파일은 이 PR에서만 바꾼다).
    ```bash
    git fetch origin
-   # 이미 열린 시간표 PR이 있으면 그 PR을 닫지 말고, 새 버전이면 새 PR을 하나 더 만든다(사용자는 최신 것만 머지하면 됨)
+   # 시간표 PR도 만든 뒤 3-12대로 바로 머지한다. 머지 못 한 옛 시간표 PR이 열려 있으면 그것부터 머지하거나 닫는다
    gh api "repos/a6442337-crypto/med-quiz/pulls?state=open&per_page=100" --jq '.[] | select(.head.ref|startswith("auto/timetable-")) | .head.ref'
    git checkout -B auto/timetable-<vNNN> origin/main     # <vNNN>: title 앞의 버전 (예: v263). 위 목록에 같은 이름이 있으면 이 단계 전체를 건너뛴다
    python3 tools/timetable.py parse /tmp/work/timetable.xlsx --title "<1에서 받은 title>"
@@ -67,7 +67,7 @@ python3 tools/state.py due --subject 신경계학     # 수동 실행 (프롬프
 `due`는 다음을 알아서 판단한다.
 - 시작일 ≤ 오늘 ≤ 시험일인 과목 가운데 `config/subjects.yaml`에서 `auto: true`인 것
 - `state/subjects/<slug>.json`이 done/skipped인 과목은 건너뜀
-- 그 과목의 열린 PR(`auto/<slug>-…`)이 있으면 검토 대기 중으로 보고 건너뜀 (머지된 옛 브랜치가 남아 있는 것은 상관없음)
+- 그 과목의 열린 PR(`auto/<slug>-…`)이 있으면 머지되지 못한 작업으로 보고 건너뜀(그 PR을 확인해 3-12로 머지하거나 보고). 머지된 옛 브랜치가 남아 있는 것은 상관없음
 - 시작일이 빠른 과목 하나만 고름
 
 ## 3. 새 과목 처리 (`action: new`)
@@ -202,7 +202,7 @@ git status --short          # 위 경로 말고 다른 파일이 들어가지 �
 git commit -m "<과목명> 기출 퀴즈 추가 (기출 N·변형 M, 검증|미검증)"
 git -c push.negotiate=true push -u origin auto/<slug>-$D
 python3 -c "import json;print(json.dumps({'title':'<과목명> 기출 퀴즈 추가','head':'auto/<slug>-$D','base':'main','body':open('/tmp/work/pr.md').read()}))" > /tmp/work/pr.json
-gh api repos/a6442337-crypto/med-quiz/pulls --input /tmp/work/pr.json --jq .html_url
+gh api repos/a6442337-crypto/med-quiz/pulls --input /tmp/work/pr.json --jq '.html_url,.number'
 ```
 - `gh pr create`는 이 환경에서 GraphQL이 막혀 실패한다. PR은 항상 위처럼 REST(`gh api …/pulls`)로 만든다.
 - 같은 브랜치의 열린 PR이 있는지: `gh api "repos/a6442337-crypto/med-quiz/pulls?state=open&head=a6442337-crypto:auto/<slug>-$D" --jq '.[].html_url'`
@@ -212,6 +212,13 @@ PR 본문(`/tmp/work/pr.md`):
 - 빠진 연도와 미수록 사항
 - 리뷰할 곳: 리포트 링크, PDF 경로, 그리고 정답을 바꾼 문항 목록(`N`에 기록한 것)
 - 마지막 줄: `🤖 Generated with [Claude Code](https://claude.com/claude-code)`
+
+### 3-12. 머지
+PR을 만든 뒤 바로 머지한다. 시간표 버전 PR(1단계), 새 과목 PR(3단계), 재검증 PR(5단계) 모두 같다.
+1. 머지 직전에 PR 브랜치에서 `python3 tools/validate.py`(오류 0개)와 `node tools/smoke.js`(smoke OK)를 다시 확인한다. 하나라도 실패하면 **머지하지 않고** PR 본문 맨 위에 실패 내용을 적은 뒤 6단계 보고에 남긴다.
+2. 머지: `gh api -X PUT repos/a6442337-crypto/med-quiz/pulls/<번호>/merge -f merge_method=merge --jq .merged` → `true`여야 한다.
+3. 머지가 충돌 등으로 실패하면(`405`/`409`) `git fetch origin main && git merge origin/main`으로 충돌을 풀고 다시 빌드·검사한 뒤 푸시하고 한 번 더 머지한다. 그래도 안 되면 PR을 열어 둔 채 보고한다.
+4. 머지 후 `git checkout main && git pull`을 해서 다음 작업이 최신 main에서 시작되게 한다.
 
 ## 4. 수동 실행
 
@@ -232,13 +239,13 @@ PR 본문(`/tmp/work/pr.md`):
    - 검안본 도착이면 그 강의의 `vb:"초안"` 문항을 검안으로 다시 풀어 보고, 바뀐 정답·해설을 고친 뒤 `vb:"검안"`으로 바꾼다. 정답이 그대로여도 `vb`는 검안으로 바꾼다. 초안과 정답이 달라진 문항은 `N`에 "초안 기준 ③ → 검안 기준 ⑤"처럼 적는다.
 3. `meta.updated`를 오늘로 바꾸고, 모두 검증되면 `meta.verified:true`로 한다. notes의 "미검증판" 문구는 상태에 맞게 고친다.
 4. 3-9 빌드·확인을 하고, 리포트에 "재검증 (날짜)" 절을 추가한다(바뀐 정답 목록 포함). `state.py set <slug> --verified true|false --level 검안|초안|none` (3-11 기준).
-5. 커밋하고 PR을 만든다(제목 `<과목명> 정답 재검증 (강의 자료 반영)`, 검안본만 반영했으면 `<과목명> 검안본 반영`). PR 본문에 검안·초안·미검증 문항 수를 적는다.
+5. 커밋하고 PR을 만든 뒤 3-12대로 머지한다(제목 `<과목명> 정답 재검증 (강의 자료 반영)`, 검안본만 반영했으면 `<과목명> 검안본 반영`). PR 본문에 검안·초안·미검증 문항 수를 적는다.
 
 ## 6. 마지막 보고 (세션 끝 메시지)
 
 짧게 쓴다.
 - 시간표 버전(바뀌었으면 이전 → 새 버전)
-- 오늘 처리한 과목과 PR 링크. 없으면 "처리할 과목 없음"
+- 오늘 처리한 과목과 PR 링크, 머지 여부(머지 못 했으면 이유). 없으면 "처리할 과목 없음"
 - 내일로 넘긴 과목
 - 실패하거나 건너뛴 것(파일 오류, 빠진 연도, 그림 누락 수)
 
