@@ -7,7 +7,9 @@ import json, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from common import R
 
-FORBIDDEN = ['학습부']           # 사이트·PDF·데이터 어디에도 쓰지 않는다
+# 사이트·PDF·데이터에 넣지 않는 것: 학생 개인정보(전화번호, '○○ 학우' 같은 이름 표기).
+# '학습부'라는 출처 표기는 허용(2026-11-16 사용자 결정).
+FORBIDDEN_RE = [(re.compile(r'01[016789]-?\d{3,4}-?\d{4}'), '전화번호'), (re.compile(r'[가-힣]{2,4}\s*학우'), "'○○ 학우' 이름 표기")]
 MODES = {'repeat', 'minor', 'major'}
 REQ_PAST = ['id', 'keys', 'ch', 'g', 'stem', 'o', 'a', 'A', 'E', 'B', 'N', 'img', 'v', 'y', 'ok']
 REQ_VAR = ['id', 'ch', 'base', 'lv', 'stem', 'o', 'a', 'E', 'B', 'N', 'img', 'v', 'ok']
@@ -65,8 +67,9 @@ def check(slug):
         for p in tprofs - {c['prof'] for c in chs.values()}:
             warns.append(f'{slug}: trends.json의 교수 {p}는 파트에 없음(표시 안 됨)')
     blob = json.dumps([meta, past, var, trends], ensure_ascii=False)
-    for w in FORBIDDEN:
-        if w in blob: errs.append(f'{slug}: 금지어 "{w}" 포함')
+    for rx, what in FORBIDDEN_RE:
+        m = rx.search(blob)
+        if m: errs.append(f'{slug}: {what} 포함 ({m.group(0)})')
     if not meta.get('verified') and any(x.get('ok') for x in past + var):
         warns.append(f'{slug}: meta.verified=false인데 ok=true 문항이 있음')
     return errs, warns
@@ -81,7 +84,7 @@ def main():
         allerr += e
     gen = R / 'data'
     for p in list(gen.glob('*/gen.js')) + [R / 'src/quiz.html', R / 'src/home.html']:
-        if p.exists() and any(w in p.read_text() for w in FORBIDDEN): allerr.append(f'{p.relative_to(R)}: 금지어 포함')
+        if p.exists() and any(rx.search(p.read_text()) for rx, _ in FORBIDDEN_RE): allerr.append(f'{p.relative_to(R)}: 개인정보 포함')
     for x in allerr: print('오류:', x)
     print(f'검사 {len(slugs)}과목 · 오류 {len(allerr)}개')
     sys.exit(1 if allerr else 0)
