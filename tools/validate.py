@@ -3,13 +3,15 @@
 
   python3 tools/validate.py [slug …]     문제가 있으면 exit 1
 """
-import json, pathlib, re, sys
+import json, pathlib, re, sys, unicodedata
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from common import R
 
 # 사이트·PDF·데이터에 넣지 않는 것: 학생 개인정보(전화번호, '○○ 학우' 같은 이름 표기).
 # '학습부'라는 출처 표기는 허용(2026-11-16 사용자 결정).
-FORBIDDEN_RE = [(re.compile(r'01[016789]-?\d{3,4}-?\d{4}'), '전화번호'), (re.compile(r'[가-힣]{2,4}\s*학우'), "'○○ 학우' 이름 표기")]
+FORBIDDEN_RE = [(re.compile(r'01[016789]-?\d{3,4}-?\d{4}'), '전화번호'), (re.compile(r'[가-힣]{2,4}\s*학우'), "'○○ 학우' 이름 표기"),
+                # 학습부 파일명 형식 'NN번 과목 YYMMDD 교수P 담당학생' — 학생 이름이 들어 있음
+                (re.compile(r'\d{2}번[\s_]*[가-힣]+[\s_]*\d{6}[\s_]*[가-힣]{2,4}[Pp][\s_]*[가-힣]{2,4}'), '학습부 파일명(학생 이름)')]
 MODES = {'repeat', 'minor', 'major'}
 REQ_PAST = ['id', 'keys', 'ch', 'g', 'stem', 'o', 'a', 'A', 'E', 'B', 'N', 'img', 'v', 'y', 'ok']
 REQ_VAR = ['id', 'ch', 'base', 'lv', 'stem', 'o', 'a', 'E', 'B', 'N', 'img', 'v', 'ok']
@@ -66,7 +68,8 @@ def check(slug):
         tprofs = {p.get('prof') for p in trends.get('profs', [])}
         for p in tprofs - {c['prof'] for c in chs.values()}:
             warns.append(f'{slug}: trends.json의 교수 {p}는 파트에 없음(표시 안 됨)')
-    blob = json.dumps([meta, past, var, trends], ensure_ascii=False)
+    # 복원 파일에서 온 글자는 자모가 분리된(NFD) 경우가 있어 합쳐서(NFC) 검사한다
+    blob = unicodedata.normalize('NFC', json.dumps([meta, past, var, trends], ensure_ascii=False))
     for rx, what in FORBIDDEN_RE:
         m = rx.search(blob)
         if m: errs.append(f'{slug}: {what} 포함 ({m.group(0)})')
