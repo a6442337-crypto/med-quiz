@@ -1,18 +1,22 @@
 {
   "updated": "2026-11-23",
-  "note": "26 학습부 검안본을 바탕으로 교수님별로 정리한 표입니다. 사진을 누르면 원본 크기로 열립니다.",
+  "note": "26 학습부 검안본을 바탕으로 교수님별로 정리한 표입니다. 표는 글자로 되어 있어 확대해도 선명하고, 화면이 좁으면 좌우로 밀어 볼 수 있습니다.",
   "profs": [
     {
       "prof": "안지예",
       "items": [
         {
           "title": "소아 경련성 질환 — 발생시기·임상양상·EEG·치료",
+          "html": "summary/ahn-peds-seizure.html",
           "img": "summary/ahn-peds-seizure.jpg",
+          "pdf": "summary/ahn-peds-seizure.pdf",
           "src": "26 학습부 08번 · 소아 경련성 질환 (EEG는 2022·2023·2025 기출 그림)"
         },
         {
           "title": "소아 발달 시기별 원시 반사",
+          "html": "summary/ahn-primitive-reflex.html",
           "img": "summary/ahn-primitive-reflex.jpg",
+          "pdf": "summary/ahn-primitive-reflex.pdf",
           "src": "26 학습부 01번 · 소아 신경계 진단과 중추신경계 발달 이상"
         }
       ]

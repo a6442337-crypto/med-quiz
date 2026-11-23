@@ -80,6 +80,10 @@ def build_subject(slug):
     (R / slug / 'index.html').write_text(page)
     sp = R / slug / 'summary.html'
     if summary:
+        for pr in summary.get('profs', []):  # 표 조각(HTML)은 data/<slug>/summary/에 두고 페이지에 그대로 넣는다
+            for it in pr.get('items', []):
+                if it.get('html'):
+                    it['body'] = (R / 'data' / slug / it['html']).read_text()
         sdata = json.dumps({'meta': {'name': meta['name'], 'ch': meta['ch']}, 'summary': summary},
                            ensure_ascii=False).replace('</', '<\\/')
         sp.write_text((R / 'src/summary.html').read_text()

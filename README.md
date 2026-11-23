@@ -39,13 +39,16 @@ python3 tools/state.py due           # 오늘 처리할 과목
 
 `data/<slug>/variants.json` (변형): [docs/variation-rules.md](docs/variation-rules.md) §4
 
-`data/<slug>/summary.json` (선택, 요약자료): 있으면 과목 페이지 맨 위 「문제집 PDF」 옆에 「요약자료」 버튼이 생기고, `<slug>/summary.html`에 교수님별로 접었다 펴는 정리표 사진을 보여 줍니다(교수님 순서는 파트 순서).
+`data/<slug>/summary.json` (선택, 요약자료): 있으면 과목 페이지 맨 위 「문제집 PDF」 옆에 「요약자료」 버튼이 생기고, `<slug>/summary.html`에 교수님별로 접었다 펴는 정리표를 보여 줍니다(교수님 순서는 파트 순서).
 ```json
 {"updated":"2026-11-23","note":"페이지 상단 안내문",
  "profs":[{"prof":"안지예","items":[{"title":"소아 경련성 질환 — 발생시기·임상양상·EEG·치료",
-   "img":"summary/ahn-peds-seizure.jpg","src":"26 학습부 08번 · 소아 경련성 질환"}]}]}
+   "html":"summary/ahn-peds-seizure.html","img":"summary/ahn-peds-seizure.jpg","pdf":"summary/ahn-peds-seizure.pdf",
+   "src":"26 학습부 08번 · 소아 경련성 질환"}]}]}
 ```
-- 그림은 `<slug>/summary/`에 영문·하이픈 파일명으로 둡니다(예: `ahn-primitive-reflex.jpg`). `prof`는 `meta.ch`의 교수 이름과 같아야 합니다(validate가 검사).
+- `html`: 표 조각(`<table>…</table>`, 스크립트·`data:` 그림 없이). 파일은 `data/<slug>/summary/`에 두고 빌드 때 페이지에 그대로 들어갑니다 → 글자라서 확대해도 선명하고 가볍습니다. 표 안 그림은 `<img src="summary/….jpg" loading="lazy">`로 `<slug>/summary/`의 파일을 참조합니다. 표 서식은 `src/summary.html`의 `.sheet` CSS(열 5개 표는 `class="w5"`, 4개는 `w4` → 좁은 화면에서 좌우 스크롤).
+- `img`·`pdf`: 받기 링크로 붙습니다(`html`이 없으면 `img`를 사진으로 보여 줌). 파일은 `<slug>/summary/`에 영문·하이픈 이름으로.
+- `prof`는 `meta.ch`의 교수 이름과 같아야 합니다(validate가 교수·파일·표 안 그림·금지어를 검사).
 
 `data/<slug>/gen.js` (선택): 시작할 때마다 수치·선지를 새로 만드는 문항 생성기 (현재 내분비학만)
 
