@@ -10,5 +10,11 @@ const srv=http.createServer((q,r)=>{let p=decodeURIComponent(q.url.split('?')[0]
  await pg.goto(`http://localhost:${port}/`);const slugs=await pg.$$eval('.card h2 a',a=>a.map(x=>x.getAttribute('href')));
  for(const s of slugs){await pg.goto(`http://localhost:${port}/${s}`);await pg.click('[data-k="all"]');await pg.click('#start');
   await pg.click('.opt >> nth=0');const ok=await pg.$('.ex');console.log(s,ok?'OK':'해설 없음');if(!ok)errs.push(s+' 해설 표시 실패');
-  const pdf=await pg.$('a.pdf');if(pdf){const h=await pdf.getAttribute('href');if(!fs.existsSync(path.join(root,s,decodeURIComponent(h))))errs.push(s+' PDF 링크 깨짐')}}
+  const sm=await pg.$('a.pdf[href="summary.html"]');if(sm){await sm.click();await pg.waitForSelector('#app details');
+   const n=await pg.$$eval('#app details',d=>d.length);await pg.click('#app details summary');
+   await pg.waitForFunction(()=>[...document.querySelectorAll('#app details[open] img')].every(i=>i.complete),null,{timeout:15000});
+   const bad=await pg.$$eval('#app details[open] img',a=>a.filter(i=>!i.naturalWidth).map(i=>i.getAttribute('src')));
+   console.log(s,'요약자료',n,'명',bad.length?'그림 깨짐':'OK');if(!n)errs.push(s+' 요약자료 비어 있음');if(bad.length)errs.push(s+' 요약자료 그림 깨짐 '+bad);
+   await pg.goto(`http://localhost:${port}/${s}`);await pg.click('[data-k="all"]');}
+  const pdf=await pg.$('a.pdf[download]');if(pdf){const h=await pdf.getAttribute('href');if(!fs.existsSync(path.join(root,s,decodeURIComponent(h))))errs.push(s+' PDF 링크 깨짐')}}
  await b.close();srv.close();if(errs.length){console.log('오류',errs);process.exit(1)}console.log('smoke OK',slugs.length,'과목')})();
