@@ -77,7 +77,19 @@ def check(slug):
         for p in summary.get('profs', []):
             for x in p.get('items', []):
                 if not str(x.get('title', '')).strip(): errs.append(f"{slug}: 요약자료({p.get('prof')}) 제목 없음")
-                if not x.get('img') or not (R / slug / x['img']).exists(): errs.append(f"{slug}: 요약자료 그림 없음 {x.get('img')}")
+                if not x.get('html') and not x.get('img'): errs.append(f"{slug}: 요약자료({x.get('title')}) html·img 둘 다 없음")
+                for k in ('img', 'pdf'):
+                    if x.get(k) and not (R / slug / x[k]).exists(): errs.append(f"{slug}: 요약자료 파일 없음 {x[k]}")
+                if x.get('html'):
+                    f = d / x['html']
+                    if not f.exists(): errs.append(f"{slug}: 요약자료 표 없음 data/{slug}/{x['html']}"); continue
+                    t = f.read_text()
+                    if re.search(r'<script|\son\w+=|data:image', t): errs.append(f"{slug}: {x['html']}에 스크립트·이벤트·내장 그림(data:) 사용")
+                    for src in re.findall(r'src="([^"]+)"', t):
+                        if not (R / slug / src).exists(): errs.append(f"{slug}: {x['html']}의 그림 없음 {src}")
+                    for rx, what in FORBIDDEN_RE:
+                        m = rx.search(unicodedata.normalize('NFC', t))
+                        if m: errs.append(f"{slug}: {x['html']}에 {what} 포함 ({m.group(0)})")
     # 복원 파일에서 온 글자는 자모가 분리된(NFD) 경우가 있어 합쳐서(NFC) 검사한다
     blob = unicodedata.normalize('NFC', json.dumps([meta, past, var, trends, summary], ensure_ascii=False))
     for rx, what in FORBIDDEN_RE:

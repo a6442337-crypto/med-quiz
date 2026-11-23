@@ -6,12 +6,23 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR',system-ui,sans-serif;font-size:15px;line-height:1.6}
 header{background:var(--pri);color:#fff;padding:14px 18px}header h1{font-size:18px;margin:0}header p{margin:2px 0 0;font-size:12.5px;opacity:.8}
 .back{color:#fff;opacity:.8;font-size:12.5px;text-decoration:none}.back:hover{opacity:1}
-main{max-width:980px;margin:0 auto;padding:16px}
+main{max-width:1140px;margin:0 auto;padding:16px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
 .sm h2{font-size:16px;margin:0 0 4px;color:var(--pri)}.sm .src{font-size:12px;color:var(--mute);margin-bottom:8px}
 .sm details{border-top:1px solid var(--line);padding:8px 0}.sm summary{cursor:pointer;font-weight:500;font-size:14px}
 .sm summary small{color:var(--mute);font-weight:400}
 figure{margin:12px 0 18px}figure h3{font-size:14px;margin:0 0 6px}
+figure .dl{display:flex;gap:6px;margin:0 0 8px}figure .dl a{font-size:12px;color:var(--pri);border:1px solid var(--pri);border-radius:6px;padding:2px 9px;text-decoration:none}
+.sheet{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px}
+.sheet table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:13px;line-height:1.45}
+.sheet table.w5{min-width:900px}.sheet table.w4{min-width:640px}
+.sheet th,.sheet td{border:1px solid #c9ced8;padding:5px 7px;vertical-align:top;text-align:left}
+.sheet th{background:#2f4a6d;color:#fff;font-weight:700;position:sticky;top:0}
+.sheet tr:nth-child(even) td{background:#f6f7f9}
+.sheet td.name{font-weight:700}.sheet td.name small{display:block;font-weight:400;color:var(--mute)}
+.sheet b{color:#b3261e}.sheet span.src{font-size:11px;color:var(--mute)}
+.sheet figure{margin:4px 0 0}.sheet figure img{border-radius:3px;max-height:none}
+.sheet .note{padding:8px 10px;font-size:13.5px}.sheet .note b{color:var(--ink)}.sheet .note ul{margin:4px 0 0;padding-left:20px}
 figure img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px;background:#fff}
 figcaption{font-size:12px;color:var(--mute);margin-top:4px}
 .empty{color:var(--mute);font-size:13.5px}
@@ -25,9 +36,15 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 /* 교수님 순서는 퀴즈의 파트 순서를 따른다 */
 const byP=Object.fromEntries((S.profs||[]).map(p=>[p.prof,p]));
 const profs=[...new Set(M.ch.map(c=>c.prof))].filter(p=>byP[p]&&(byP[p].items||[]).length);
+/* 표(body: 저장소 안 HTML 조각)가 있으면 글자 그대로 보여 주고, 없으면 사진. PDF·이미지는 받기 링크로 */
+const fig=x=>{const dl=[x.pdf&&`<a href="${esc(x.pdf)}" download>PDF 받기</a>`,x.img&&x.body&&`<a href="${esc(x.img)}" download>이미지 받기</a>`].filter(Boolean).join('');
+ const main=x.body?`<div class="sheet">${x.body}</div>`:`<a href="${esc(x.img)}" target="_blank" rel="noopener"><img src="${esc(x.img)}" alt="${esc(x.title)}" loading="lazy"></a>`;
+ return `<figure><h3>${esc(x.title)}</h3>${dl?`<div class="dl">${dl}</div>`:''}${main}${x.src?`<figcaption>${esc(x.src)}</figcaption>`:''}</figure>`};
 const lec=p=>M.ch.filter(c=>c.prof===p).map(c=>c.title).join(' · ');
 document.getElementById('app').innerHTML=`<div class="panel sm"><h2>교수님별 요약자료</h2><div class="src">${esc(S.note||'')}${S.updated?` (${esc(S.updated)} 정리)`:''}</div>
 ${profs.length?profs.map(p=>{const it=byP[p].items;return `<details><summary>${esc(p)} 교수님 <small>${esc(lec(p))} · 정리표 ${it.length}개</small></summary>
-${it.map(x=>`<figure><h3>${esc(x.title)}</h3><a href="${esc(x.img)}" target="_blank" rel="noopener"><img src="${esc(x.img)}" alt="${esc(x.title)}" loading="lazy"></a>${x.src?`<figcaption>${esc(x.src)}</figcaption>`:''}</figure>`).join('')}</details>`}).join(''):'<div class="empty">아직 올라온 요약자료가 없습니다.</div>'}</div>`;
+${it.map(fig).join('')}</details>`}).join(''):'<div class="empty">아직 올라온 요약자료가 없습니다.</div>'}</div>`;
+/* 표 안 EEG 사진은 눌러서 원본 크기로 */
+document.querySelectorAll('.sheet img').forEach(i=>{i.style.cursor='zoom-in';i.title='눌러서 크게 보기';i.addEventListener('click',()=>window.open(i.src,'_blank','noopener'))});
 </script>
 </body></html>
