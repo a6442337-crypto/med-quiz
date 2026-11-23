@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""데이터 검사: 정답 인덱스, 선지 중복, 필수 필드, 그림 파일, 변형 원본, 금지어.
+"""데이터 검사: 정답 인덱스, 선지 중복, 필수 필드, 그림 파일, 변형 원본, 요약자료, 금지어.
 
   python3 tools/validate.py [slug …]     문제가 있으면 exit 1
 """
@@ -68,8 +68,18 @@ def check(slug):
         tprofs = {p.get('prof') for p in trends.get('profs', [])}
         for p in tprofs - {c['prof'] for c in chs.values()}:
             warns.append(f'{slug}: trends.json의 교수 {p}는 파트에 없음(표시 안 됨)')
+    summary = json.loads((d / 'summary.json').read_text()) if (d / 'summary.json').exists() else None
+    if summary is not None:  # 교수님별 요약자료 → <slug>/summary.html
+        sprofs = [p.get('prof') for p in summary.get('profs', [])]
+        if len(set(sprofs)) != len(sprofs): errs.append(f'{slug}: summary.json에 같은 교수가 두 번 있음')
+        for p in set(sprofs) - {c['prof'] for c in chs.values()}:
+            errs.append(f'{slug}: summary.json의 교수 {p}는 파트에 없음(표시 안 됨)')
+        for p in summary.get('profs', []):
+            for x in p.get('items', []):
+                if not str(x.get('title', '')).strip(): errs.append(f"{slug}: 요약자료({p.get('prof')}) 제목 없음")
+                if not x.get('img') or not (R / slug / x['img']).exists(): errs.append(f"{slug}: 요약자료 그림 없음 {x.get('img')}")
     # 복원 파일에서 온 글자는 자모가 분리된(NFD) 경우가 있어 합쳐서(NFC) 검사한다
-    blob = unicodedata.normalize('NFC', json.dumps([meta, past, var, trends], ensure_ascii=False))
+    blob = unicodedata.normalize('NFC', json.dumps([meta, past, var, trends, summary], ensure_ascii=False))
     for rx, what in FORBIDDEN_RE:
         m = rx.search(blob)
         if m: errs.append(f'{slug}: {what} 포함 ({m.group(0)})')
@@ -86,7 +96,7 @@ def main():
         for x in w: print('경고:', x)
         allerr += e
     gen = R / 'data'
-    for p in list(gen.glob('*/gen.js')) + [R / 'src/quiz.html', R / 'src/home.html']:
+    for p in list(gen.glob('*/gen.js')) + [R / 'src/quiz.html', R / 'src/home.html', R / 'src/summary.html']:
         if p.exists() and any(rx.search(p.read_text()) for rx, _ in FORBIDDEN_RE): allerr.append(f'{p.relative_to(R)}: 개인정보 포함')
     for x in allerr: print('오류:', x)
     print(f'검사 {len(slugs)}과목 · 오류 {len(allerr)}개')

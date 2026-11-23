@@ -39,6 +39,14 @@ python3 tools/state.py due           # 오늘 처리할 과목
 
 `data/<slug>/variants.json` (변형): [docs/variation-rules.md](docs/variation-rules.md) §4
 
+`data/<slug>/summary.json` (선택, 요약자료): 있으면 과목 페이지 맨 위 「문제집 PDF」 옆에 「요약자료」 버튼이 생기고, `<slug>/summary.html`에 교수님별로 접었다 펴는 정리표 사진을 보여 줍니다(교수님 순서는 파트 순서).
+```json
+{"updated":"2026-11-23","note":"페이지 상단 안내문",
+ "profs":[{"prof":"안지예","items":[{"title":"소아 경련성 질환 — 발생시기·임상양상·EEG·치료",
+   "img":"summary/ahn-peds-seizure.jpg","src":"26 학습부 08번 · 소아 경련성 질환"}]}]}
+```
+- 그림은 `<slug>/summary/`에 영문·하이픈 파일명으로 둡니다(예: `ahn-primitive-reflex.jpg`). `prof`는 `meta.ch`의 교수 이름과 같아야 합니다(validate가 검사).
+
 `data/<slug>/gen.js` (선택): 시작할 때마다 수치·선지를 새로 만드는 문항 생성기 (현재 내분비학만)
 
 ## 저장소 이름

@@ -62,6 +62,12 @@ def build_subject(slug):
             '검증': ' · 정답·해설은 2026년 강의 기준'}[label]
     pdf = R / slug / pdf_name(meta)
     pdf_link = f'<a class="pdf" href="{html.escape(pdf.name)}" download>문제집 PDF</a>' if pdf.exists() else ''
+    sm = R / 'data' / slug / 'summary.json'  # 교수님별 요약자료 (선택, 별도 페이지 <slug>/summary.html)
+    summary = json.loads(sm.read_text()) if sm.exists() else None
+    if summary and any(p.get('items') for p in summary.get('profs', [])):
+        pdf_link += '<a class="pdf" href="summary.html">요약자료</a>'
+    if pdf_link:
+        pdf_link = f'<div class="links">{pdf_link}</div>'
     gen = R / 'data' / slug / 'gen.js'
     tr = R / 'data' / slug / 'trends.json'  # 과목·교수님별 경향 분석 (선택, 페이지 맨 아래에 표시)
     trends = json.loads(tr.read_text()) if tr.exists() else None
@@ -72,9 +78,18 @@ def build_subject(slug):
             .replace('__GEN__', gen.read_text() if gen.exists() else GEN_STUB).replace('__DATA__', data))
     (R / slug).mkdir(exist_ok=True)
     (R / slug / 'index.html').write_text(page)
+    sp = R / slug / 'summary.html'
+    if summary:
+        sdata = json.dumps({'meta': {'name': meta['name'], 'ch': meta['ch']}, 'summary': summary},
+                           ensure_ascii=False).replace('</', '<\\/')
+        sp.write_text((R / 'src/summary.html').read_text()
+                      .replace('__NAME__', html.escape(meta['name'])).replace('__DATA__', sdata))
+    elif sp.exists():
+        sp.unlink()
     card = {'slug': slug, 'name': meta['name'], 'past': len(past), 'var': len(var), 'years': years,
             'verified': bool(meta.get('verified')), 'vlabel': label, 'vcount': vc, 'exam': meta.get('exam'), 'updated': meta.get('updated'),
             'pdf': f'{slug}/{pdf.name}' if pdf.exists() else None,
+            'summary': f'{slug}/summary.html' if summary else None,
             'modes': {m: sum(1 for c in meta['ch'] if c['mode'] == m) for m in ('repeat', 'minor', 'major')}}
     # 홈 화면은 과목별 card.json을 읽는다 → 과목 PR끼리 index.html을 두고 충돌하지 않음
     (R / slug / 'card.json').write_text(json.dumps(card, ensure_ascii=False) + '\n')
