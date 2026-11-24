@@ -65,8 +65,9 @@ def foot_html(qs):
     rows = ''.join(f'<li><b>{"학습부 " + n.zfill(2) + "번" if n != "?" else "학습부 번호 미상"}</b> 사진 누락 — '
                    f'{len(v)}문항 ({", ".join(html.escape(k(x)) for x in v)})</li>' for n, v in mf.items())
     total = len({x for v in mf.values() for x in v})
-    return (f'<footer class="miss"><b>그림 누락 안내</b> · 원본 복원 파일에서 그림을 읽어오지 못한 문항 {total}개가 있습니다. '
-            f'해당 학습부(검안본) 파일을 받으면 그림을 채웁니다.<ul>{rows}</ul></footer>')
+    nums = ', '.join(n.zfill(2) + '번' for n in mf if n != '?')
+    return (f'<footer class="miss"><details><summary><b>그림 누락 안내</b> · {total}문항 (학습부 {nums or "번호 미상"})</summary>'
+            f'원본 복원 파일에서 그림을 읽어오지 못한 문항입니다. 해당 학습부(검안본) 파일을 받으면 그림을 채웁니다.<ul>{rows}</ul></details></footer>')
 
 
 def pdf_name(meta):
