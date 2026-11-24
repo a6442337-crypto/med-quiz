@@ -39,11 +39,18 @@ def check(slug):
         if x.get('id') in ids: errs.append(f'{tag} id 중복')
         ids.add(x.get('id'))
         o = x.get('o', [])
-        if not (2 <= len(o) <= 7): errs.append(f'{tag} 선지 수 {len(o)}')
+        if x.get('t') == 's':  # 주관식: o=[], a=-1, A=모범답, acc=자동 채점 인정 답(빈 목록이면 스스로 채점)
+            if x.get('v'): errs.append(f'{tag} 변형 문항은 주관식 불가')
+            if o or x.get('a') != -1: errs.append(f'{tag} 주관식인데 o/a가 있음')
+            if not str(x.get('A', '')).strip(): errs.append(f'{tag} 주관식 답(A) 비어 있음')
+            if not isinstance(x.get('acc'), list): errs.append(f'{tag} 주관식 acc 없음')
+        elif x.get('t') is not None: errs.append(f"{tag} t={x.get('t')} (s만 가능)")
+        if x.get('t') == 's': pass
+        elif not (2 <= len(o) <= 7): errs.append(f'{tag} 선지 수 {len(o)}')
         if len(set(map(str.strip, o))) != len(o):
             # 기출은 복원 원문 그대로 둘 수 있음(경고), 변형 문항은 오류
             (errs if x.get('v') else warns).append(f'{tag} 선지 중복')
-        if not isinstance(x.get('a'), int) or not (0 <= x['a'] < len(o)): errs.append(f'{tag} 정답 인덱스 {x.get("a")}')
+        if x.get('t') != 's' and (not isinstance(x.get('a'), int) or not (0 <= x['a'] < len(o))): errs.append(f'{tag} 정답 인덱스 {x.get("a")}')
         if x.get('ch') not in chs: errs.append(f'{tag} ch {x.get("ch")} 없음')
         if not str(x.get('E', '')).strip(): errs.append(f'{tag} 해설 비어 있음')
         if x.get('vb') not in (None, '초안', '검안'): errs.append(f"{tag} vb={x.get('vb')} (초안|검안만 가능)")
@@ -53,7 +60,7 @@ def check(slug):
             if not (R / slug / s).exists(): errs.append(f'{tag} 그림 없음 {s}')
         if not x.get('v'):
             for k in x.get('keys', []):
-                if not re.fullmatch(r'\d\d-\d+(-\d+)?', k): errs.append(f'{tag} key 형식 {k}')
+                if not re.fullmatch(r'\d\d-(2Q-)?\d+(-\d+)?', k): errs.append(f'{tag} key 형식 {k}')
             if sorted({2000 + int(k[:2]) for k in x.get('keys', [])}) != x.get('y'): errs.append(f'{tag} y가 keys와 다름')
     pids = {x['id'] for x in past}
     for x in var:

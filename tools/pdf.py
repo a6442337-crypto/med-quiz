@@ -34,8 +34,13 @@ def q_html(n, x, by_id):
     elif x.get('vb'):
         tags += f'<span class="tag {"k1" if x["vb"] == "초안" else "k2"}">{x["vb"]} 검증</span>'
     imgs = ''.join(f'<div class="img"><img src="{(R / x["_slug"] / s).as_uri()}"></div>' for s in x.get('img', []))
-    opts = ''.join(f'<li><span class="c">{CIR[i]}</span>{e(o)}</li>' for i, o in enumerate(x['o']))
-    A = x.get('A') if not x.get('v') and x.get('A') else CIR[x['a']]
+    if x.get('t') == 's':  # 주관식: 선지 대신 답 쓰는 칸
+        tags += '<span class="tag s">주관식</span>'
+        opts = '<div class="blank">답: </div>'
+        A = x['A']
+    else:
+        opts = '<ol class="opts">' + ''.join(f'<li><span class="c">{CIR[i]}</span>{e(o)}</li>' for i, o in enumerate(x['o'])) + '</ol>'
+        A = x.get('A') if not x.get('v') and x.get('A') else CIR[x['a']]
     extra = ''
     if x.get('ok') is False:
         extra += '<div class="note">※ 미검증: 2026년 강의 자료가 아직 없어 복원 해설의 답을 실었습니다.</div>'
@@ -49,7 +54,7 @@ def q_html(n, x, by_id):
         extra += f'<div class="lv">변형 내용: {e(x["vn"])}</div>'
     src = f'<div class="src">근거: {e(x["B"])}</div>' if x.get('B') else ''
     return (f'<div class="q"><div class="qh"><b>{n}.</b>{tags}</div><div class="stem">{x["stem"]}</div>{imgs}'
-            f'<ol class="opts">{opts}</ol><div class="ans"><div class="h">정답 {e(A)}</div>'
+            f'{opts}<div class="ans"><div class="h">정답 {e(A)}</div>'
             f'<div>{e(x["E"])}</div>{src}{extra}</div></div>')
 
 

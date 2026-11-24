@@ -12,6 +12,7 @@
      마지막 group은 키워드가 비어 있어도 되는 기본 소단원.
 동작
   - chapters.json에 있는 교수(= 2026년 담당)의 객관식만 남김 (선지 4개 이상, 빈 선지 없음)
+  - 기존 past.json의 주관식(t='s')은 지우지 않고 그대로 둔다 (주관식 형식은 AUTOMATION.md '주관식')
   - 2026년 담당 교수 본 문항의 rel 중 --rel-years(기본 2020,2021) 문항을 그 교수 문항으로 추가
   - 선지 집합·정답·지문(유사도 > 0.8)이 같으면 하나로 합치고 keys에 연도·번호를 모두 단다
   - 해설 정리: 학습부·학우·해설자 표기, 강조 기호(22Pま 등) 제거
@@ -133,6 +134,11 @@ def main():
                          A=CIR[h['a']], E=h['E'], B=B, N=N, img=h.get('img_files', []), v=False,
                          y=sorted({x['year'] for x in g}), ok=False, ra=CIR[h['a']]))
     past.sort(key=lambda x: (x['ch'], gorder[x['g']], -max(x['y']), x['id']))
+    # 주관식(t='s')은 이 도구가 만들지 않는다 → 이미 있으면 그대로 이어 붙인다(파트·소단원 순서 유지)
+    old = json.loads((D / 'past.json').read_text()) if (D / 'past.json').exists() else []
+    for s_ in [x for x in old if x.get('t') == 's' and x['ch'] < len(CH) and x['g'] in gorder]:
+        idx = [i for i, x in enumerate(past) if x['ch'] == s_['ch'] and gorder[x['g']] <= gorder[s_['g']]]
+        past.insert((max(idx) + 1) if idx else len(past), s_)
     (D / 'past.json').write_text(json.dumps(past, ensure_ascii=False, indent=0))
     (W / 'dropped.json').write_text(json.dumps(drop, ensure_ascii=False, indent=0))
     modes = json.loads((W / 'modes.json').read_text()) if (W / 'modes.json').exists() else {}
