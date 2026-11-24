@@ -3,7 +3,7 @@
 
   python3 tools/pdf.py <slug> [--html 미리보기.html]
 
-필요: pip install weasyprint==70.0, 글꼴 fonts-noto-cjk (Noto Sans CJK KR)
+필요: bash tools/setup_env.sh (weasyprint 70 · 한글 글꼴 Noto Sans CJK KR 준비와 검사)
 """
 import argparse, html, json, pathlib, re, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -124,9 +124,19 @@ def main():
     meta, _ = load_subject(a.slug)
     (R / a.slug).mkdir(exist_ok=True)
     out = R / a.slug / pdf_name(meta)
+    # 먼저 임시 파일로 만들고, 한글 글꼴이 실제로 들어갔는지 확인한 뒤에만 기존 PDF를 바꾼다.
+    # (글꼴이 없는 환경에서 만든 PDF는 한글이 □로 나온다 → 그런 PDF는 올리지 않는다)
+    tmp = out.with_suffix('.tmp.pdf')
+    HTML(string=doc, base_url=str(R / a.slug)).write_pdf(tmp)
+    fonts = set(re.findall(rb'/BaseFont\s*/([A-Za-z0-9+\-]+)', HTML(string='<style>' + (R / 'src/pdf.css').read_text() + '</style><p>한글 검사</p>').write_pdf(uncompressed_pdf=True)))
+    if not any(b'Noto-Sans-CJK-KR' in f for f in fonts):
+        tmp.unlink(missing_ok=True)
+        raise SystemExit(f'PDF 중단: 한글 글꼴(Noto Sans CJK KR)이 들어가지 않습니다 (들어간 글꼴 {sorted(fonts)}). '
+                         'bash tools/setup_env.sh 를 먼저 실행하세요. 기존 PDF는 그대로 둡니다.')
     for old in (R / a.slug).glob('*.pdf'):
-        old.unlink()
-    HTML(string=doc, base_url=str(R / a.slug)).write_pdf(out)
+        if old != tmp:
+            old.unlink()
+    tmp.rename(out)
     print(out.relative_to(R), f'{out.stat().st_size / 1e6:.1f}MB')
 
 

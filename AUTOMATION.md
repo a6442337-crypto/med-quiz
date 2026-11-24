@@ -23,9 +23,7 @@
 # add_repo 도구가 없으면: cd /home/user && git clone https://github.com/a6442337-crypto/med-quiz.git
 cd /home/user/med-quiz            # 클론한 위치
 git config user.name  "Claude (auto)"; git config user.email "noreply@anthropic.com"
-python3 -m pip install -q weasyprint==70.0 pyyaml openpyxl pillow   # 'pip'만 쓰면 다른 파이썬에 설치될 수 있다
-apt-get install -y -q fonts-noto-cjk >/dev/null 2>&1 || (apt-get update -q && apt-get install -y -q fonts-noto-cjk)
-fc-list | grep -q "Noto Sans CJK KR" && echo 글꼴OK
+bash tools/setup_env.sh          # 마지막 줄 "환경 OK"를 확인. 실패하면 exit 1과 함께 원인을 출력한다
 mkdir -p /tmp/work
 ```
 - 커넥터 두 개가 필요하다.
@@ -33,6 +31,8 @@ mkdir -p /tmp/work
   - **drive-mcp** (`mcp__drive-mcp__search_drive`, `read_drive_file`, `get_hwp_image`): 학과 공유 드라이브(account `dept`)의 기출·학습부를 읽는다.
   - 둘 중 하나라도 없으면 아무것도 바꾸지 말고, 어느 커넥터가 없는지만 보고하고 끝낸다.
 - - `git push`가 권한 오류로 실패하면 커밋을 남긴 채 멈추고, 실패 메시지를 6단계 보고에 그대로 적는다.
+- `tools/setup_env.sh`가 하는 일: 파이썬 패키지(weasyprint 70·Pillow·pyyaml·openpyxl) 검사 → 안 되면 `--break-system-packages`로 설치, 그래도 안 되면 강제 재설치 / pango 라이브러리 / 한글 글꼴(apt → 안 되면 저장소의 `tools/fonts` 예비 글꼴) / 한글 PDF 한 장을 만들어 글꼴이 들어갔는지 확인. **pip·apt를 손으로 다시 돌리지 말고 이 스크립트만 쓴다.** "환경 실패"가 나오면 PDF를 만들지 않고(데이터·페이지 작업은 계속 가능) 출력 내용을 6단계 보고에 적는다.
+- `tools/pdf.py`는 한글 글꼴이 PDF에 실제로 들어가지 않으면 기존 PDF를 지우지 않고 중단한다.
 - Playwright·Chromium은 환경에 이미 있다(`node tools/smoke.js`에서 사용). 다시 설치하지 않는다.
 
 ## 1. 시간표 받기 · 버전 기록
