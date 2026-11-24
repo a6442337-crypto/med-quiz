@@ -6,7 +6,7 @@
 
 빌드 전에 tools/validate.py 검사를 돌리고, 문제가 있으면 멈춘다.
 """
-import argparse, html, json, pathlib, subprocess, sys
+import re, argparse, html, json, pathlib, subprocess, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from common import R, load_config, jload
 
@@ -41,6 +41,34 @@ def verify_status(qs):
     return label, c
 
 
+MISSING = '[그림 누락'
+
+
+def missing_figs(qs):
+    """그림 누락 문항 → {학습부 번호: [문항 키…]}. 번호는 근거(B)의 '학습부 NN번' 또는 '강의 NN'에서 읽는다(없으면 '?')."""
+    out = {}
+    for x in qs:
+        if MISSING not in x.get('stem', ''):
+            continue
+        nums = re.findall(r'학습부 (\d+)번', x.get('B', '')) or re.findall(r'강의 (\d+)', x.get('B', '')) or ['?']
+        for n in dict.fromkeys(nums):
+            out.setdefault(n, []).append(x['keys'][0] if x.get('keys') else x['id'])
+    return dict(sorted(out.items(), key=lambda kv: (kv[0] == '?', int(kv[0]) if kv[0].isdigit() else 0)))
+
+
+def foot_html(qs):
+    """페이지 맨 아래 안내: 몇 번 학습부 사진(그림)을 읽어오지 못했는지"""
+    mf = missing_figs(qs)
+    if not mf:
+        return ''
+    k = lambda key: f"20{key[:2]} #{key[3:]}"
+    rows = ''.join(f'<li><b>{"학습부 " + n.zfill(2) + "번" if n != "?" else "학습부 번호 미상"}</b> 사진 누락 — '
+                   f'{len(v)}문항 ({", ".join(html.escape(k(x)) for x in v)})</li>' for n, v in mf.items())
+    total = len({x for v in mf.values() for x in v})
+    return (f'<footer class="miss"><b>그림 누락 안내</b> · 원본 복원 파일에서 그림을 읽어오지 못한 문항 {total}개가 있습니다. '
+            f'해당 학습부(검안본) 파일을 받으면 그림을 채웁니다.<ul>{rows}</ul></footer>')
+
+
 def pdf_name(meta):
     return f"{meta['name']}_기출문제집.pdf"
 
@@ -51,7 +79,8 @@ def build_subject(slug):
     var = [x for x in qs if x.get('v')]
     years = sorted(meta.get('years', []))
     yr = f"{years[0]}–{years[-1]}" if years else ''
-    sub = f"{yr} 복원 기출 {len(past)}문항" + (f" + 예상 변형 {len(var)}문항" if var else '')
+    ns = sum(1 for x in past if x.get('t') == 's')
+    sub = f"{yr} 복원 기출 {len(past)}문항" + (f"(주관식 {ns})" if ns else '') + (f" + 예상 변형 {len(var)}문항" if var else '')
     if (R / 'data' / slug / 'gen.js').exists():
         sub += '(일부는 매번 새로 생성)'
     label, vc = verify_status(qs)
@@ -74,7 +103,7 @@ def build_subject(slug):
     data = json.dumps({'meta': {k: v for k, v in meta.items() if k != 'notes'}, 'q': qs, 'trends': trends},
                       ensure_ascii=False).replace('</', '<\\/')
     page = ((R / 'src/quiz.html').read_text()
-            .replace('__NAME__', html.escape(meta['name'])).replace('__SUB__', sub).replace('__PDF__', pdf_link)
+            .replace('__NAME__', html.escape(meta['name'])).replace('__SUB__', sub).replace('__PDF__', pdf_link).replace('__FOOT__', foot_html(past))
             .replace('__GEN__', gen.read_text() if gen.exists() else GEN_STUB).replace('__DATA__', data))
     (R / slug).mkdir(exist_ok=True)
     (R / slug / 'index.html').write_text(page)
@@ -93,6 +122,7 @@ def build_subject(slug):
     card = {'slug': slug, 'name': meta['name'], 'past': len(past), 'var': len(var), 'years': years,
             'verified': bool(meta.get('verified')), 'vlabel': label, 'vcount': vc, 'exam': meta.get('exam'), 'updated': meta.get('updated'),
             'pdf': f'{slug}/{pdf.name}' if pdf.exists() else None,
+            'short': ns, 'missing_figs': {n: len(v) for n, v in missing_figs(past).items()},
             'summary': f'{slug}/summary.html' if summary else None,
             'modes': {m: sum(1 for c in meta['ch'] if c['mode'] == m) for m in ('repeat', 'minor', 'major')}}
     # 홈 화면은 과목별 card.json을 읽는다 → 과목 PR끼리 index.html을 두고 충돌하지 않음
