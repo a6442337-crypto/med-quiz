@@ -17,7 +17,9 @@ ul.notes li { margin: 0 0 3mm; } ul.notes li::before { content: '• '; }
 section.ch { page-break-before: always; }
 h2 { color: #1d3c6e; font-size: 16pt; margin: 0; padding-bottom: 2pt; border-bottom: 1.6pt solid #1d3c6e; }
 .chsub { font-size: 8.8pt; color: #666; margin: 2pt 0 4mm; }
-.q { margin: 0 0 4mm; }
+/* 문항(번호·지문·그림·선지·정답 상자)을 한 페이지에 둔다. 한 페이지보다 긴 문항만 어쩔 수 없이 나뉜다 */
+.q { margin: 0 0 4mm; break-inside: avoid; page-break-inside: avoid; }
+.band, .qh { break-after: avoid; page-break-after: avoid; }
 .qh { margin-bottom: 1pt; } .qh b { font-size: 10.5pt; margin-right: 3pt; }
 .tag { display: inline-block; background: #1d3c6e; color: #fff; font-size: 7.6pt; border-radius: 3pt; padding: 0 4pt; margin-right: 2pt; line-height: 1.5; }
 .tag.v { background: #7a4bb3; } .tag.u { background: #b07a12; } .tag.o { background: #fff; color: #1d3c6e; border: 0.6pt solid #1d3c6e; }

@@ -53,7 +53,7 @@ def q_html(n, x, by_id):
     if x.get('v') and x.get('vn'):
         extra += f'<div class="lv">변형 내용: {e(x["vn"])}</div>'
     src = f'<div class="src">근거: {e(x["B"])}</div>' if x.get('B') else ''
-    return (f'<div class="q"><div class="qh"><b>{n}.</b>{tags}</div><div class="stem">{x["stem"]}</div>{imgs}'
+    return (f'<div class="q" id="q{n}"><div class="qh"><b>{n}.</b>{tags}</div><div class="stem">{x["stem"]}</div>{imgs}'
             f'{opts}<div class="ans"><div class="h">정답 {e(A)}</div>'
             f'<div>{e(x["E"])}</div>{src}{extra}</div></div>')
 
