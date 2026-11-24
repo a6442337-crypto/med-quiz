@@ -13,7 +13,21 @@ main{max-width:1140px;margin:0 auto;padding:16px}
 .sm summary small{color:var(--mute);font-weight:400}
 figure{margin:12px 0 18px}figure h3{font-size:14px;margin:0 0 6px}
 figure .dl{display:flex;gap:6px;margin:0 0 8px}figure .dl a{font-size:12px;color:var(--pri);border:1px solid var(--pri);border-radius:6px;padding:2px 9px;text-decoration:none}
-.sheet{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:6px}
+.sheet{overflow:hidden;border:1px solid var(--line);border-radius:6px;position:relative}
+/* 좁은 화면: 표를 원래 너비로 그린 뒤 화면 너비에 맞게 통째로 줄인다(zoom). 글자라서 확대해도 선명하다 */
+.sheet.fit{cursor:zoom-in}.sheet.fit .inner{transform-origin:0 0}
+.fithint{display:none;font-size:12px;color:var(--mute);margin:4px 0 0}.fithint b{color:var(--pri);font-weight:500}
+.sheet.fit+.fithint{display:block}
+/* 크게 보기: 전체 화면에서 두 손가락 확대·끌어서 이동 */
+#zv{position:fixed;inset:0;z-index:50;background:#fff;display:none;flex-direction:column}
+#zv.on{display:flex}
+#zv .bar{display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--pri);color:#fff;font-size:13px}
+#zv .bar .t{flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#zv .bar button{font:inherit;font-size:13px;background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:6px;padding:5px 10px;min-width:36px}
+#zv .vp{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;background:#eef0f4;overscroll-behavior:contain}
+#zv .pg{background:#fff;margin:0;transform-origin:0 0}
+#zv .sheet{border:0;border-radius:0;overflow:visible}#zv .sheet th,.sheet.fit th{position:static}
+body.zv-open{overflow:hidden}
 .sheet table{border-collapse:collapse;table-layout:fixed;width:100%;font-size:13px;line-height:1.45}
 .sheet table.w5{min-width:900px}.sheet table.w4{min-width:640px}
 .sheet th,.sheet td{border:1px solid #c9ced8;padding:5px 7px;vertical-align:top;text-align:left}
@@ -31,6 +45,7 @@ figcaption{font-size:12px;color:var(--mute);margin-top:4px}
 </style></head><body>
 <header><a class="back" href="./">← __NAME__ 기출 퀴즈로</a><h1>__NAME__ 요약자료</h1><p>교수님별 정리표</p></header>
 <main id="app"></main>
+<div id="zv" role="dialog" aria-label="표 크게 보기"><div class="bar"><span class="t"></span><button data-z="out" aria-label="축소">−</button><button data-z="in" aria-label="확대">+</button><button data-z="fit">맞춤</button><button data-z="close">닫기</button></div><div class="vp"><div class="pg"></div></div></div>
 <script id="data" type="application/json">__DATA__</script>
 <script>
 const D=JSON.parse(document.getElementById('data').textContent),M=D.meta,S=D.summary||{};
@@ -40,13 +55,64 @@ const byP=Object.fromEntries((S.profs||[]).map(p=>[p.prof,p]));
 const profs=[...new Set(M.ch.map(c=>c.prof))].filter(p=>byP[p]&&(byP[p].items||[]).length);
 /* 표(body: 저장소 안 HTML 조각)가 있으면 글자 그대로 보여 주고, 없으면 사진. PDF·이미지는 받기 링크로 */
 const fig=x=>{const dl=[x.pdf&&`<a href="${esc(x.pdf)}" download>PDF 받기</a>`,x.img&&x.body&&`<a href="${esc(x.img)}" download>이미지 받기</a>`].filter(Boolean).join('');
- const main=x.body?`<div class="sheet">${x.body}</div>`:`<a href="${esc(x.img)}" target="_blank" rel="noopener"><img src="${esc(x.img)}" alt="${esc(x.title)}" loading="lazy"></a>`;
+ const main=x.body?`<div class="sheet"><div class="inner">${x.body}</div></div><div class="fithint">표 전체를 화면에 맞춰 줄였습니다 · <b>눌러서 크게 보기</b>(두 손가락으로 확대)</div>`:`<a href="${esc(x.img)}" target="_blank" rel="noopener"><img src="${esc(x.img)}" alt="${esc(x.title)}" loading="lazy"></a>`;
  return `<figure><h3>${esc(x.title)}</h3>${dl?`<div class="dl">${dl}</div>`:''}${main}${x.src?`<figcaption>${esc(x.src)}</figcaption>`:''}</figure>`};
 const lec=p=>M.ch.filter(c=>c.prof===p).map(c=>c.title).join(' · ');
 document.getElementById('app').innerHTML=`<div class="panel sm"><h2>교수님별 요약자료</h2><div class="src">${esc(S.note||'')}${S.updated?` (${esc(S.updated)} 정리)`:''}</div>
 ${profs.length?profs.map(p=>{const it=byP[p].items;return `<details><summary>${esc(p)} 교수님 <small>${esc(lec(p))} · 정리표 ${it.length}개</small></summary>
 ${it.map(fig).join('')}</details>`}).join(''):'<div class="empty">아직 올라온 요약자료가 없습니다.</div>'}</div>`;
-/* 표 안 EEG 사진은 눌러서 원본 크기로 */
-document.querySelectorAll('.sheet img').forEach(i=>{i.style.cursor='zoom-in';i.title='눌러서 크게 보기';i.addEventListener('click',()=>window.open(i.src,'_blank','noopener'))});
+/* ── 표 맞춤: 화면이 표의 원래 너비(표 min-width, 기본 900px)보다 좁으면 그 너비로 그린 뒤 비율대로 줄인다 ── */
+const designW=t=>{const m=parseFloat(getComputedStyle(t).minWidth);return m>0?m:900};
+function fitAll(){document.querySelectorAll('#app .sheet').forEach(sh=>{
+ const inner=sh.firstElementChild,t=inner.querySelector('table');if(!t)return;
+ inner.style.width='';inner.style.transform='';sh.style.height='';
+ const W=designW(t),cw=sh.clientWidth;
+ if(!cw||cw>=W){sh.classList.remove('fit');return}
+ const k=cw/W;inner.style.width=W+'px';inner.style.transform=`scale(${k})`;
+ sh.style.height=Math.ceil(inner.offsetHeight*k)+'px';sh.classList.add('fit');sh.dataset.k=k});}
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(fitAll,120)});
+document.querySelectorAll('#app details').forEach(d=>d.addEventListener('toggle',fitAll));
+document.querySelectorAll('#app .sheet img').forEach(i=>{if(!i.complete)i.addEventListener('load',fitAll,{once:true})});
+fitAll();
+
+/* ── 크게 보기 ── */
+const zv=document.getElementById('zv'),vp=zv.querySelector('.vp'),pg=zv.querySelector('.pg');
+let z=1,zFit=1,W0=900,H0=0;
+function setZ(nz,cx,cy){ // (cx,cy): 화면 안에서 고정할 점
+ nz=Math.max(zFit*0.6,Math.min(4,nz));
+ const r=vp.getBoundingClientRect();cx??=r.width/2;cy??=r.height/2;
+ const px=(vp.scrollLeft+cx)/z,py=(vp.scrollTop+cy)/z;
+ z=nz;pg.style.transform=`scale(${z})`;pg.style.width=W0+'px';
+ pg.style.marginBottom=(H0*z-H0)+'px';pg.style.marginRight=(W0*z-W0)+'px';
+ vp.scrollLeft=px*z-cx;vp.scrollTop=py*z-cy;}
+function openZ(sh,title){
+ pg.innerHTML=`<div class="sheet">${sh.firstElementChild.innerHTML}</div>`;zv.querySelector('.t').textContent=title;
+ zv.classList.add('on');document.body.classList.add('zv-open');
+ W0=designW(pg.querySelector('table'));pg.style.transform='';pg.style.width=W0+'px';pg.style.margin='0';H0=pg.offsetHeight;
+ zFit=Math.min(1,vp.clientWidth/W0);z=1;setZ(zFit,0,0);vp.scrollLeft=0;vp.scrollTop=0;
+ pg.querySelectorAll('img').forEach(i=>{i.style.cursor='zoom-in';i.addEventListener('click',e=>{e.stopPropagation();window.open(i.src,'_blank','noopener')})});
+ history.pushState({zv:1},'');}
+function closeZ(back){if(!zv.classList.contains('on'))return;zv.classList.remove('on');document.body.classList.remove('zv-open');pg.innerHTML='';if(back!==false&&history.state&&history.state.zv)history.back()}
+addEventListener('popstate',()=>closeZ(false));
+addEventListener('keydown',e=>{if(e.key==='Escape')closeZ()});
+zv.querySelector('.bar').addEventListener('click',e=>{const a=e.target.dataset.z;if(!a)return;
+ if(a==='close')closeZ();else if(a==='in')setZ(z*1.4);else if(a==='out')setZ(z/1.4);else if(a==='fit'){setZ(zFit,0,0);vp.scrollLeft=0}});
+/* 두 손가락 확대(직접 처리 — 페이지 전체가 커지지 않게) */
+let p0=null;
+const dist=t=>Math.hypot(t[0].clientX-t[1].clientX,t[0].clientY-t[1].clientY);
+vp.addEventListener('touchstart',e=>{if(e.touches.length===2){const r=vp.getBoundingClientRect();p0={d:dist(e.touches),z,cx:(e.touches[0].clientX+e.touches[1].clientX)/2-r.left,cy:(e.touches[0].clientY+e.touches[1].clientY)/2-r.top}}},{passive:true});
+vp.addEventListener('touchmove',e=>{if(p0&&e.touches.length===2){e.preventDefault();setZ(p0.z*dist(e.touches)/p0.d,p0.cx,p0.cy)}},{passive:false});
+vp.addEventListener('touchend',e=>{if(e.touches.length<2)p0=null});
+/* 트랙패드 확대(ctrl+휠) */
+vp.addEventListener('wheel',e=>{if(e.ctrlKey){e.preventDefault();const r=vp.getBoundingClientRect();setZ(z*Math.exp(-e.deltaY/200),e.clientX-r.left,e.clientY-r.top)}},{passive:false});
+/* 두 번 탭: 맞춤 ↔ 2배 */
+let lastTap=0;vp.addEventListener('touchend',e=>{if(e.changedTouches.length!==1||e.touches.length)return;const n=Date.now();
+ if(n-lastTap<300){const r=vp.getBoundingClientRect(),t=e.changedTouches[0];setZ(z>zFit*1.3?zFit:Math.max(1,zFit*2),t.clientX-r.left,t.clientY-r.top);lastTap=0}else lastTap=n});
+/* 맞춤 상태의 표를 누르면 크게 보기 */
+document.getElementById('app').addEventListener('click',e=>{const sh=e.target.closest('.sheet');if(!sh)return;
+ const img=e.target.closest('img');
+ if(sh.classList.contains('fit')){e.preventDefault();openZ(sh,sh.closest('figure')?.querySelector('h3')?.textContent||'정리표');return}
+ if(img)window.open(img.src,'_blank','noopener');});
+document.querySelectorAll('#app .sheet:not(.fit) img').forEach(i=>{i.style.cursor='zoom-in';i.title='눌러서 크게 보기'});
 </script>
 </body></html>
