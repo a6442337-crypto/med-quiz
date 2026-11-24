@@ -11,7 +11,8 @@
 ```bash
 python3 tools/validate.py            # 데이터 검사
 python3 tools/build.py               # 모든 과목 페이지 + 홈 다시 만들기
-python3 tools/build.py --pdf neuro   # PDF도 다시 만들기 (weasyprint 70, fonts-noto-cjk 필요)
+bash tools/setup_env.sh              # 처음 한 번: 패키지·한글 글꼴 준비와 검사("환경 OK")
+python3 tools/build.py --pdf neuro   # PDF도 다시 만들기 (한글 글꼴이 안 들어가면 중단)
 node tools/smoke.js                  # 브라우저로 열어 확인
 python3 tools/timetable.py subjects  # 과목별 시작일·시험일
 python3 tools/state.py due           # 오늘 처리할 과목
