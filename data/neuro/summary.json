@@ -63,7 +63,7 @@
       "prof": "임성철",
       "items": [
         {
-          "title": "말초신경·근육 질환 — 병리학적 소견과 임상증상 비교",
+          "title": "말초신경·근육 질환·말초신경초 종양 — 병리학적 소견과 임상증상 비교",
           "html": "summary/lim-peripheral-muscle-path.html",
           "img": "summary/lim-peripheral-muscle-path.jpg",
           "pdf": "summary/lim-peripheral-muscle-path.pdf",
@@ -74,13 +74,6 @@
           "html": "summary/lim-cns-degenerative-path.html",
           "img": "summary/lim-cns-degenerative-path.jpg",
           "pdf": "summary/lim-cns-degenerative-path.pdf",
-          "src": "26 학습부 15번 · 신경병리 — 26Pま 표시 또는 2021~2025 기출 내용만 (사진은 강의 슬라이드)"
-        },
-        {
-          "title": "말초신경초 종양 — Schwannoma vs MPNST",
-          "html": "summary/lim-nerve-sheath-tumor-path.html",
-          "img": "summary/lim-nerve-sheath-tumor-path.jpg",
-          "pdf": "summary/lim-nerve-sheath-tumor-path.pdf",
           "src": "26 학습부 15번 · 신경병리 — 26Pま 표시 또는 2021~2025 기출 내용만 (사진은 강의 슬라이드)"
         }
       ]
