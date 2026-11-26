@@ -42,6 +42,7 @@ table.dt{border-collapse:collapse;margin:8px auto;font-size:13px}table.dt td,tab
 .tr details{border-top:1px solid var(--line);padding:8px 0}.tr summary{cursor:pointer;font-weight:500;font-size:14px}
 .sa textarea{width:100%;min-height:64px;font:inherit;font-size:15px;padding:10px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box}.sa .row{margin-top:8px}.sa .mine{font-size:13.5px;margin:6px 0;padding:8px 10px;background:#f3f4f8;border-radius:6px;white-space:pre-wrap}.sa .ans{font-weight:700;color:var(--ok)}.grade{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}.grade button.on{outline:2px solid var(--pri)}.tags span.s{background:#0f766e}
 footer.miss{max-width:820px;margin:8px auto 28px;padding:10px 14px;font-size:12.5px;color:#6b5210;background:#fbf4e6;border-left:4px solid #b07a12;border-radius:6px}footer.miss summary{cursor:pointer}footer.miss ul{margin:4px 0 0;padding-left:18px}
+.tr .an{background:#f4f1fa;border-left:3px solid var(--var);border-radius:6px;padding:6px 10px;margin:6px 0}.tr .an b{color:var(--var);font-size:13px}.tr .an ul{margin:2px 0}
 .tr summary small{color:var(--mute);font-weight:400}.tr .cmp{font-size:12px;color:var(--mute);margin:4px 0 0 18px}
 </style></head><body>
 <header><div class="hdr"><div><a class="back" href="../">← 과목 선택</a><h1>__NAME__ 기출 퀴즈</h1><p>__SUB__</p></div>__PDF__</div></header>
@@ -96,8 +97,9 @@ function trendsHtml(){const T=D.trends;if(!T)return'';
  const cmp=p=>M.ch.filter(c=>c.prof===p).map(c=>`${MODEL[c.mode]||c.mode} — ${c.why||''}`)[0]||'';
  return `<div class="panel tr"><h2>과목·교수님별 경향 분석</h2><div class="src">${esc(T.sources||'')}${T.updated?` (${esc(T.updated)} 정리)`:''}</div>
  <ul>${(T.summary||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>
+ ${(T.analysis||[]).length?`<div class="an"><b>기출 비교로 본 판단</b><ul>${T.analysis.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}
  ${profs.map(p=>{const x=byP[p];const md=M.ch.find(c=>c.prof===p);return `<details><summary>${esc(p)} 교수님 <small>${esc(x.lectures||'')} · <span class="md ${isVary(md.mode)?'vary':''}">${MODEL[md.mode]||md.mode}</span></small></summary>
- <ul>${(x.points||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul><div class="cmp">연도 비교: ${esc(cmp(p))}</div></details>`}).join('')}</div>`}
+ <ul>${(x.points||[]).map(s=>`<li>${esc(s)}</li>`).join('')}</ul>${(x.analysis||[]).length?`<div class="an"><b>기출 비교로 본 판단</b><ul>${x.analysis.map(s=>`<li>${esc(s)}</li>`).join('')}</ul></div>`:''}<div class="cmp">연도 비교: ${esc(cmp(p))}</div></details>`}).join('')}</div>`}
 function home(){
  const p=pool();const nv=D.q.filter(x=>x.v).length;
  const rep=M.ch.filter(c=>c.mode==='repeat').map(c=>c.prof);const unv=D.q.filter(x=>!x.ok).length,dr=D.q.filter(x=>x.ok&&x.vb==='초안').length;
