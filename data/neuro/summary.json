@@ -44,14 +44,14 @@
       "prof": "김현철",
       "items": [
         {
-          "title": "뇌경색 시기별 CT 소견과 색 — hyperacute·acute·chronic",
+          "title": "뇌경색 시기별 CT·MRI 소견과 색 — hyperacute·acute·chronic",
           "html": "summary/kim-infarct-ct-stage.html",
           "img": "summary/kim-infarct-ct-stage.jpg",
           "pdf": "summary/kim-infarct-ct-stage.pdf",
           "src": "26 학습부 06번 · 신경계 영상진단 (기출 포인트는 같은 학습부의 기출 해설)"
         },
         {
-          "title": "뇌경색 위치별 소견 — territorial·lacunar·borderzone",
+          "title": "뇌졸중 위치별 소견 — territorial·lacunar·borderzone 경색, SAH",
           "html": "summary/kim-infarct-location.html",
           "img": "summary/kim-infarct-location.jpg",
           "pdf": "summary/kim-infarct-location.pdf",
