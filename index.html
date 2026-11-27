@@ -48,7 +48,7 @@ Promise.all(D.subjects.map(s=>fetch(`${s.slug}/card.json`,{cache:'no-cache'}).th
 <h2><a href="${c.slug}/">${esc(c.name)}</a></h2>
 <div>${c.exam?`<span class="badge d">${dday(c.exam)}</span>`:''}${(()=>{const l=c.vlabel||(c.verified?'검증':'미검증');return l==='검증'?'':`<span class="badge ${l==='검안 검증'?'k2':(l==='초안 검증'?'k1':'u')}">${l}</span>`})()}<span class="badge">${c.years.length?c.years[0]+'–'+c.years[c.years.length-1]:''}</span></div>
 <div class="meta">기출 ${c.past}문항${c.var?` · 변형 ${c.var}문항`:''}${c.exam?` · 시험 ${md(c.exam)}`:''}${c.updated?` · ${md(c.updated)} 갱신`:''}</div>
-<div class="links"><a class="go" href="${c.slug}/">퀴즈 풀기</a>${c.pdf?`<a class="pdf" href="${encodeURI(c.pdf)}" download>문제집 PDF</a>`:''}</div></div>`).join('')||'<div class="up">아직 올라온 과목이 없습니다.</div>';
+<div class="links"><a class="go" href="${c.slug}/">퀴즈 풀기</a>${c.pdf?`<a class="pdf" href="${encodeURI(c.pdf)}" download>문제집 PDF</a>`:''}${c.summary?`<a class="pdf" href="${encodeURI(c.summary)}">요약자료</a>`:''}</div></div>`).join('')||'<div class="up">아직 올라온 과목이 없습니다.</div>';
  const built=new Set(cards.map(c=>c.slug));
  const up=D.subjects.filter(s=>s.auto&&!built.has(s.slug)&&s.start&&!ended(s.exam));
  document.getElementById('up').innerHTML=up.length?`<div class="lbl">준비 중 (과목 시작일에 자동으로 만들어집니다)</div>`+up.map(u=>`<div class="up"><span>${esc(u.name)}</span><span>시작 ${md(u.start)}${u.exam?` · 시험 ${md(u.exam)}`:''}</span></div>`).join(''):'';
