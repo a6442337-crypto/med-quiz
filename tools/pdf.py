@@ -52,7 +52,7 @@ def q_html(n, x, by_id):
         extra += '<div class="src">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>'
     elif x.get('vb'):
         extra += '<div class="src">검안으로 검증됨</div>'
-    if x.get('N') and not x.get('v'):
+    if x.get('N') and (not x.get('v') or (x.get('pred') and not x['N'].startswith('주관식 예상'))):
         extra += f'<div class="note">※ {e(x["N"])}</div>'
     if x.get('v') and x.get('vn'):
         extra += f'<div class="lv">변형 내용: {e(x["vn"])}</div>'
