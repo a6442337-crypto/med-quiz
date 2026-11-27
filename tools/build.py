@@ -95,7 +95,7 @@ def build_subject(slug):
     sm = R / 'data' / slug / 'summary.json'  # 교수님별 요약자료 (선택, 별도 페이지 <slug>/summary.html)
     summary = json.loads(sm.read_text()) if sm.exists() else None
     if summary and any(p.get('items') for p in summary.get('profs', [])):
-        pdf_link += '<a class="pdf" href="summary.html">요약자료</a>'
+        pdf_link = '<a class="pdf" href="summary.html">요약자료</a>' + pdf_link  # 요약자료 버튼을 맨 앞에
     for ex in meta.get('extra_pdfs', []):  # 추가 PDF(예: 주관식 예상 문제집) — <slug>/extra/ 에 둔다(pdf.py가 <slug>/*.pdf를 지우므로)
         if (R / slug / ex['file']).exists():
             pdf_link += f'<a class="pdf" href="{html.escape(ex["file"])}" download>{html.escape(ex["label"])}</a>'
