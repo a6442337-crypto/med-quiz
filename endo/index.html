@@ -259,7 +259,7 @@ function baseTag(x){const b=byId[x.base];return b?`원본 ${b.keys.map(k=>`20${k
 /* 검증 표시: ok=false → 미검증, vb='초안'|'검안' → 그 자료로 검증, vb='교과서' → 강의 근거 없어 교과서·진료지침으로 확인, vb 없음(옛 데이터) → 검증 */
 const VL=x=>x.ok===false?'미검증':(x.vb==='교과서'?'교과서로 확인함':(x.vb?x.vb+'으로 검증됨':'검증됨'));
 function tags(x){const u=`<span class="${x.ok===false?'u':(x.vb==='초안'?'k1':'k2')}">${x.ok===false?'미검증':(x.vb==='교과서'?'교과서 확인':(x.vb?x.vb+' 검증':'검증'))}</span>`;
- if(x.v)return `<span class="v">변형${x.lv?' · '+(LVL[x.lv]||x.lv):''}</span>${u}<span class="g">${esc(x.dyn?x.N:baseTag(x))}</span>`;
+ if(x.v)return `<span class="v">${x.pred?'예상 주관식':'변형'+(x.lv?' · '+(LVL[x.lv]||x.lv):'')}</span>${u}<span class="g">${esc(x.dyn?x.N:baseTag(x))}</span>`;
  return x.keys.map(k=>`<span>20${k.slice(0,2)} #${k.slice(3).replace('-1','')}</span>`).join('')+'<span class="y">원본</span>'+(isS(x)?'<span class="s">주관식</span>':'')+u+`<span class="g">${esc(x.g)}</span>`}
 function show(){
  const x=run.q[run.i],a=run.ans[x.id];const done=a!==undefined;
@@ -278,7 +278,7 @@ function show(){
  $('#next').onclick=()=>{if(run.i+1<run.q.length){run.i++;show();scrollTo(0,0)}else result()};
 }
 const nOk=()=>Object.entries(run.ans).filter(([id,v])=>right(run.q.find(q=>q.id===id),v)).length;
-function exFoot(x){return `${x.N?`<div class="note">※ ${esc(x.N)}</div>`:''}${x.ok===false?'<div class="note">※ 미검증: 복원 해설 기준 답입니다.</div>':(x.vb==='초안'?'<div class="small">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>':(x.vb==='교과서'?'<div class="small">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>':(x.vb?'<div class="small">검안으로 검증됨</div>':'')))}${x.B?`<div class="src">근거: ${esc(x.B)}</div>`:''}`}
+function exFoot(x){return `${x.N&&!(x.pred&&x.N.startsWith('주관식 예상'))?`<div class="note">※ ${esc(x.N)}</div>`:''}${x.ok===false?(x.pred?'<div class="note">※ 미검증: 동기 정리본·교과서 기준 답이며 26 학습부와 대조하지 않았습니다.</div>':'<div class="note">※ 미검증: 복원 해설 기준 답입니다.</div>'):(x.vb==='초안'?'<div class="small">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>':(x.vb==='교과서'?'<div class="small">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>':(x.vb?'<div class="small">검안으로 검증됨</div>':'')))}${x.B?`<div class="src">근거: ${esc(x.B)}</div>`:''}`}
 function mark(x,ok){if(ok)wrong.delete(x.id);else wrong.add(x.id);LS.set('wrong',[...wrong])}
 function showS(x,a){const done=a!==undefined;
  app.innerHTML=`<div class="panel"><div class="top"><span>${run.i+1} / ${run.q.length}</span><span>맞힌 문제 ${nOk()}</span></div>

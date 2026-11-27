@@ -24,7 +24,7 @@ def q_html(n, x, by_id):
     tags = ''
     if x.get('v'):
         b = by_id.get(x.get('base'))
-        tags += f'<span class="tag v">변형 · {LV.get(x.get("lv"), "")}</span>'
+        tags += '<span class="tag v">예상 주관식</span>' if x.get('pred') else f'<span class="tag v">변형 · {LV.get(x.get("lv"), "")}</span>'
         if b:
             tags += '<span class="tag o">원본 ' + ', '.join(f'20{k[:2]} #{k[3:].replace("-1", "")}' for k in b['keys']) + '</span>'
     else:
@@ -42,7 +42,9 @@ def q_html(n, x, by_id):
         opts = '<ol class="opts">' + ''.join(f'<li><span class="c">{CIR[i]}</span>{e(o)}</li>' for i, o in enumerate(x['o'])) + '</ol>'
         A = x.get('A') if not x.get('v') and x.get('A') else CIR[x['a']]
     extra = ''
-    if x.get('ok') is False:
+    if x.get('ok') is False and x.get('pred'):
+        extra += '<div class="note">※ 미검증: 동기 정리본·교과서 기준 답이며 26 학습부와 대조하지 않았습니다.</div>'
+    elif x.get('ok') is False:
         extra += '<div class="note">※ 미검증: 2026년 강의 자료가 아직 없어 복원 해설의 답을 실었습니다.</div>'
     elif x.get('vb') == '초안':
         extra += '<div class="src">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>'
@@ -50,7 +52,7 @@ def q_html(n, x, by_id):
         extra += '<div class="src">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>'
     elif x.get('vb'):
         extra += '<div class="src">검안으로 검증됨</div>'
-    if x.get('N') and not x.get('v'):
+    if x.get('N') and (not x.get('v') or (x.get('pred') and not x['N'].startswith('주관식 예상'))):
         extra += f'<div class="note">※ {e(x["N"])}</div>'
     if x.get('v') and x.get('vn'):
         extra += f'<div class="lv">변형 내용: {e(x["vn"])}</div>'

@@ -40,7 +40,7 @@ def check(slug):
         ids.add(x.get('id'))
         o = x.get('o', [])
         if x.get('t') == 's':  # 주관식: o=[], a=-1, A=모범답, acc=자동 채점 인정 답(빈 목록이면 스스로 채점)
-            if x.get('v'): errs.append(f'{tag} 변형 문항은 주관식 불가')
+            if x.get('v') and not x.get('pred'): errs.append(f'{tag} 변형 문항은 주관식 불가(사용자 요청 예상 주관식은 pred:true)')
             if o or x.get('a') != -1: errs.append(f'{tag} 주관식인데 o/a가 있음')
             if not str(x.get('A', '')).strip(): errs.append(f'{tag} 주관식 답(A) 비어 있음')
             if not isinstance(x.get('acc'), list): errs.append(f'{tag} 주관식 acc 없음')
@@ -64,9 +64,10 @@ def check(slug):
             if sorted({2000 + int(k[:2]) for k in x.get('keys', [])}) != x.get('y'): errs.append(f'{tag} y가 keys와 다름')
     pids = {x['id'] for x in past}
     for x in var:
-        if x.get('base') not in pids: errs.append(f"{slug}:{x['id']} 원본 {x.get('base')} 없음")
+        if x.get('pred') and x.get('t') == 's' and x.get('base') is None: pass
+        elif x.get('base') not in pids: errs.append(f"{slug}:{x['id']} 원본 {x.get('base')} 없음")
         if x.get('lv') not in ('minor', 'major'): errs.append(f"{slug}:{x['id']} lv={x.get('lv')}")
-        if chs.get(x.get('ch'), {}).get('mode') == 'repeat': errs.append(f"{slug}:{x['id']} 반복 파트에 변형 문항")
+        if chs.get(x.get('ch'), {}).get('mode') == 'repeat' and not x.get('pred'): errs.append(f"{slug}:{x['id']} 반복 파트에 변형 문항")
     if var:  # 정답 위치 쏠림 경고 (변형 규칙: 고르게)
         cnt = [sum(1 for x in var if x['a'] == i) for i in range(5)]
         if max(cnt) > 0.4 * len(var) and len(var) >= 10: warns.append(f'{slug}: 변형 정답 위치 쏠림 {cnt}')

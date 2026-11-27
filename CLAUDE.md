@@ -9,5 +9,5 @@
 - 시간표 파일(state/timetable.json, logs/timetable.log)은 auto/timetable-vNNN PR에서만 바꾼다(과목 PR과 충돌 방지).
 - 이 환경에서는 원격 브랜치를 지울 수 없다. 브랜치 이름에 날짜·버전을 붙여 재사용하지 않고, 진행 여부는 열린 PR로 판단한다(tools/state.py).
 - 요약자료(교수님별 정리표): 사용자가 정리표를 만든 뒤 "사이트에 반영"을 요청하면 → 표는 HTML 조각으로(`data/<slug>/summary/<이름>.html`, 표 안 그림은 `<slug>/summary/`의 JPEG를 참조), 받기용 JPEG·PDF는 `<slug>/summary/`에 영문 파일명으로 넣고 `data/<slug>/summary.json`의 해당 교수 `items`에 {title, html, img, pdf, src}를 추가(교수가 없으면 새 항목) → build → smoke → PR. 형식은 README '요약자료' 참고. 별도 페이지 `<slug>/summary.html`, 버튼은 문제집 PDF 옆.
-- 주관식: past.json의 t:'s' 문항(o:[], a:-1, A=모범답, acc=자동 채점 인정 답). assemble.py 뒤에 tools/short.py로 넣는다(AUTOMATION.md 3-3b).
+- 주관식: past.json의 t:'s' 문항(o:[], a:-1, A=모범답, acc=자동 채점 인정 답). assemble.py 뒤에 tools/short.py로 넣는다(AUTOMATION.md 3-3b). 사용자가 요청한 예상 주관식은 variants.json에 pred:true로(AUTOMATION.md 3-3b 끝), 추가 PDF는 meta `extra_pdfs`·`<slug>/extra/`.
 - 그림을 읽어오지 못한 문항은 '그림 누락' 표시를 남기고 근거(B)에 학습부/강의 번호를 채운다 → 빌드가 퀴즈 페이지 맨 아래에 '학습부 NN번 사진 누락'을 자동으로 적는다.
