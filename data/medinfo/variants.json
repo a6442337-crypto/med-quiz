@@ -59,14 +59,15 @@
 "VPN이나 SSL을 이용하면 병원 밖에서도 web-based로 PACS를 열람할 수 있다."
 ],
 "a": 0,
-"E": "의료 영상의 표준 규격은 DICOM(Digital Imaging and Communications in Medicine)이다. HL7은 EMR 등 병원 정보시스템 사이에서 데이터를 주고받기 위한 표준으로, PACS에서 DICOM이 하는 역할을 EMR 쪽에서 한다. ②~⑤는 PACS·RIS 강의 내용 그대로다.",
-"B": "관련 강의: 강의 04 의료정보시스템과 전자의무기록시스템 I · 강의 07 의료정보시스템과 전자의무기록시스템 II",
+"E": "의료 영상의 국제 표준 파일 포맷은 DICOM(Digital Imaging and Communications in Medicine)이다. HL7은 병원 정보시스템 사이에서 데이터를 주고받는 표준으로, PACS는 HL7 형태로 받아 DICOM으로 저장하기도 하지만 영상 표준 규격은 아니다. ② PACS 영상은 DICOM(.dcm)으로 저장되고 CD로 내보낼 때도 .dcm 파일과 DICOMDIR 목록으로 저장된다. ③ PACS 4대 구성요소, ④ RAID 저장, ⑤ VPN·SSL을 이용한 web-based PACS 열람은 모두 옳다.",
+"B": "26 학습부 02번(검안) · 의료정보학의 소개",
 "N": "2025년 25번 변형",
 "vn": "RIS 문항의 틀(관련 없는 항목 고르기)을 PACS로 옮기고, 오답을 DACOM 대신 HL7(다른 표준)과 혼동하도록 바꿈",
 "img": [],
 "v": true,
-"ok": false,
-"y": []
+"ok": true,
+"y": [],
+"vb": "검안"
 },
 {
 "id": "V04",
