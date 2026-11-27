@@ -46,6 +46,8 @@ def q_html(n, x, by_id):
         extra += '<div class="note">※ 미검증: 2026년 강의 자료가 아직 없어 복원 해설의 답을 실었습니다.</div>'
     elif x.get('vb') == '초안':
         extra += '<div class="src">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>'
+    elif x.get('vb') == '교과서':
+        extra += '<div class="src">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>'
     elif x.get('vb'):
         extra += '<div class="src">검안으로 검증됨</div>'
     if x.get('N') and not x.get('v'):
@@ -78,7 +80,7 @@ def render(slug):
     out = [f'<h1>{e(meta["title"])}</h1><div class="sub">{e(sub)}</div>']
     label, vc = verify_status(qs)
     if label != '미검증':
-        lv = {'검안 검증': ' 모든 문항을 <b>검안</b>으로 검증했습니다.',
+        lv = {'검안 검증': ' 모든 문항을 <b>검안</b>으로 검증했습니다.' + (f" 다만 강의 자료에 근거가 없는 {vc['교과서']}문항은 교과서·진료지침으로 확인했습니다(문항마다 표시)." if vc.get('교과서') else ''),
               '초안 검증': f" <b>초안으로 검증됨</b>(초안 {vc['초안']} · 검안 {vc['검안']}문항) — 검안본이 올라오면 다시 확인해 새 판을 올립니다.",
               '일부 검증': f" <b>일부 검증</b> — 검안 {vc['검안']} · 초안 {vc['초안']} · 미검증 {vc['미검증']}문항(문항마다 표시). 강의 자료가 올라오는 대로 새 판을 올립니다.",
               '검증': ''}[label]

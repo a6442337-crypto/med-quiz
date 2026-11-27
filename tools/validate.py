@@ -53,7 +53,7 @@ def check(slug):
         if x.get('t') != 's' and (not isinstance(x.get('a'), int) or not (0 <= x['a'] < len(o))): errs.append(f'{tag} 정답 인덱스 {x.get("a")}')
         if x.get('ch') not in chs: errs.append(f'{tag} ch {x.get("ch")} 없음')
         if not str(x.get('E', '')).strip(): errs.append(f'{tag} 해설 비어 있음')
-        if x.get('vb') not in (None, '초안', '검안'): errs.append(f"{tag} vb={x.get('vb')} (초안|검안만 가능)")
+        if x.get('vb') not in (None, '초안', '검안', '교과서'): errs.append(f"{tag} vb={x.get('vb')} (초안|검안|교과서만 가능)")
         if x.get('ok') is False and x.get('vb'): errs.append(f'{tag} 미검증(ok:false)인데 vb가 있음')
         if x.get('ok') is True and not x.get('vb') and slug != 'endo': warns.append(f'{tag} 검증됨인데 vb(초안|검안) 없음')
         for s in x.get('img', []):
