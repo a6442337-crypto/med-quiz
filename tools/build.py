@@ -9,6 +9,7 @@
 import re, argparse, html, json, pathlib, subprocess, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from common import R, load_config, jload
+import mock as mockplan
 
 GEN_STUB = '/* 이 과목은 자동 생성 문항이 없습니다 */'
 
@@ -104,7 +105,8 @@ def build_subject(slug):
     gen = R / 'data' / slug / 'gen.js'
     tr = R / 'data' / slug / 'trends.json'  # 과목·교수님별 경향 분석 (선택, 페이지 맨 아래에 표시)
     trends = json.loads(tr.read_text()) if tr.exists() else None
-    data = json.dumps({'meta': {k: v for k, v in meta.items() if k != 'notes'}, 'q': qs, 'trends': trends},
+    mock = mockplan.plan(slug, meta, qs)  # meta.mock이 있으면 모의시험 출제 계획(tools/mock.py)
+    data = json.dumps({'meta': {k: v for k, v in meta.items() if k != 'notes'}, 'q': qs, 'trends': trends, 'mock': mock},
                       ensure_ascii=False).replace('</', '<\\/')
     page = ((R / 'src/quiz.html').read_text()
             .replace('__NAME__', html.escape(meta['name'])).replace('__SUB__', sub).replace('__PDF__', pdf_link).replace('__FOOT__', foot_html(past))
@@ -127,7 +129,7 @@ def build_subject(slug):
             'verified': bool(meta.get('verified')), 'vlabel': label, 'vcount': vc, 'exam': meta.get('exam'), 'updated': meta.get('updated'),
             'pdf': f'{slug}/{pdf.name}' if pdf.exists() else None,
             'short': ns, 'missing_figs': {n: len(v) for n, v in missing_figs(past).items()},
-            'summary': f'{slug}/summary.html' if summary else None,
+            'summary': f'{slug}/summary.html' if summary else None, 'mock': mock['total'] if mock else None,
             'modes': {m: sum(1 for c in meta['ch'] if c['mode'] == m) for m in ('repeat', 'minor', 'major')}}
     # 홈 화면은 과목별 card.json을 읽는다 → 과목 PR끼리 index.html을 두고 충돌하지 않음
     (R / slug / 'card.json').write_text(json.dumps(card, ensure_ascii=False) + '\n')
