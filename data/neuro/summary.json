@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-27",
+  "updated": "2026-11-28",
   "note": "26 학습부 검안본을 바탕으로 교수님별로 정리한 표입니다. 표는 글자로 되어 있어 확대해도 선명하고, 휴대폰에서는 표 전체를 화면에 맞춰 줄여 보여 주고, 표를 누르면 두 손가락으로 확대해 볼 수 있습니다.",
   "profs": [
     {
@@ -63,6 +63,18 @@
           "img": "summary/kim-infarct-location.jpg",
           "pdf": "summary/kim-infarct-location.pdf",
           "src": "26 학습부 06번 · 신경계 영상진단"
+        }
+      ]
+    },
+    {
+      "prof": "김후원",
+      "items": [
+        {
+          "title": "뇌의 회로별 구성 부위와 역할 — 감각·운동·기저핵·언어·기억·의식·보상·변연계(Papez)·공포·시상하부",
+          "html": "summary/kimhw-brain-circuits.html",
+          "img": "summary/kimhw-brain-circuits.jpg",
+          "pdf": "summary/kimhw-brain-circuits.pdf",
+          "src": "26 학습부 12번 · 신경계의 구조와 기능 (기출 포인트는 같은 학습부의 기출 해설, 사진은 2013·2018·2022 기출 그림)"
         }
       ]
     },
