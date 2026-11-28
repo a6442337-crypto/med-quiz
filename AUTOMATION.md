@@ -126,7 +126,7 @@ python3 tools/timetable.py lectures <slug>
   - 작은 부로 대화에 들어온 주관식은 `$W/short_extra.json`(x.json 문항 형식 + `"q":1|2`, `"opts":[]`)에 손으로 옮긴다.
   - 손볼 것은 `$W/short_fix.json`에 적는다(형식은 tools/short.py 머리말): 자동 채점 인정 답(`acc`: 영어·한글·약어·흔한 철자), 여러 항목을 써야 하는 문항(`self` → 스스로 채점), 소단원(`g`), 같은 문항 묶기(`merge`), 검안본으로 확인한 문항(`verify`), 그림(`img`). 예시: `data/neuro/work/`.
   - 2026 학습부(검안본)에 같은 기출과 답이 있으면 `verify`로 검증 표시한다. 없으면 미검증(ok:false)으로 둔다.
-- 주관식 문항 형식: `t:"s"`, `o:[]`, `a:-1`, `A`=모범 답, `acc`=자동 채점 인정 답 목록(빈 목록이면 스스로 채점). 퀴즈에서는 답을 써서 확인하고, 문제집 PDF에는 답 칸과 모범 답이 들어간다. 변형 문항은 주관식으로 만들지 않는다. 예외: 사용자가 직접 요청한 '예상 주관식'은 variants.json에 `pred:true, t:"s"`로 넣는다(base는 없으면 null, 학습부와 대조 전이면 ok:false). 예: 신경계 P001~P202(동기 주관식 후보 정리 기반, 별도 PDF는 meta `extra_pdfs` → `<slug>/extra/`).
+- 주관식 문항 형식: `t:"s"`, `o:[]`, `a:-1`, `A`=모범 답, `acc`=자동 채점 인정 답 목록(빈 목록이면 스스로 채점). 퀴즈에서는 답을 써서 확인하고, 문제집 PDF에는 답 칸과 모범 답이 들어간다. 변형 문항은 주관식으로 만들지 않는다. 예외: 사용자가 직접 요청한 '예상 주관식'은 variants.json에 `pred:true, t:"s"`로 넣는다(base는 없으면 null, 학습부와 대조 전이면 ok:false). 예: 신경계 P001~P202(동기 주관식 후보 정리 기반, 별도 PDF는 meta `extra_pdfs` → `<slug>/extra/`). 이 주관식 기출+예상 PDF는 `python3 tools/short_pdf.py <slug>`로 다시 만든다(제목·학습부 목록·일러두기·문항 순서는 `data/<slug>/extra_short.json`, 목록에 없는 새 문항은 근거의 학습부 번호 끝에 붙음). 예상 문항 지문·답·그림을 고치면 build 뒤에 함께 돌린다.
 
 ### 3-4. 파트 구성 `data/<slug>/chapters.json`
 2026년 담당 교수님마다 파트 하나를 만든다. 순서는 3-1 강의 순서를 따른다.
