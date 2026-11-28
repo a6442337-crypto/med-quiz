@@ -29,7 +29,7 @@ table.dt{border-collapse:collapse;margin:8px auto;font-size:13px}table.dt td,tab
 .ex{border-left:4px solid var(--ok);background:var(--okbg);border-radius:6px;padding:10px 12px;margin-top:10px;font-size:14px}
 .ex.wrong{border-color:var(--bad);background:var(--badbg)}
 .ex .h{font-weight:700;margin-bottom:4px}.ex .src{font-size:12px;color:var(--mute);margin-top:6px}.ex .note{font-size:12.5px;color:var(--bad);margin-top:4px}
-.nav{display:flex;justify-content:space-between;margin-top:14px;gap:8px}
+.nav{display:flex;justify-content:space-between;margin-top:14px;gap:8px}.nav>button{white-space:nowrap;align-self:flex-start}.nav span{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 .score{font-size:30px;font-weight:700;color:var(--pri)}
 .wl{font-size:13.5px}.wl div{padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}.wl div:hover{color:var(--pri)}
 .small{font-size:12.5px;color:var(--mute)}
@@ -44,6 +44,10 @@ table.dt{border-collapse:collapse;margin:8px auto;font-size:13px}table.dt td,tab
 footer.miss{max-width:820px;margin:8px auto 28px;padding:10px 14px;font-size:12.5px;color:#6b5210;background:#fbf4e6;border-left:4px solid #b07a12;border-radius:6px}footer.miss summary{cursor:pointer}footer.miss ul{margin:4px 0 0;padding-left:18px}
 .tr .an{background:#f4f1fa;border-left:3px solid var(--var);border-radius:6px;padding:6px 10px;margin:6px 0}.tr .an b{color:var(--var);font-size:13px}.tr .an ul{margin:2px 0}
 .tr summary small{color:var(--mute);font-weight:400}.tr .cmp{font-size:12px;color:var(--mute);margin:4px 0 0 18px}
+.opt.sel{border-color:var(--pri);background:var(--pri2)}
+.mock{border:1.5px solid var(--pri)}.mock h2{font-size:16px;margin:0 0 4px;color:var(--pri)}.mock table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0}.mock td,.mock th{white-space:nowrap;border-bottom:1px solid var(--line);padding:4px 6px;text-align:center}.mock th{color:var(--mute);font-weight:500}.mock td:first-child,.mock th:first-child{text-align:left}.mock summary{cursor:pointer;font-size:13px;color:var(--pri);margin-top:6px}
+.grid{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.grid button{width:34px;height:30px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:12px;cursor:pointer;padding:0}.grid button.a{background:var(--pri2);border-color:var(--pri)}.grid button.cur{outline:2px solid var(--pri)}.grid button.ok{background:var(--okbg);border-color:var(--ok)}.grid button.bad{background:var(--badbg);border-color:var(--bad)}
+.sub{border-left:4px solid #b07a12;background:#fbf4e6;border-radius:6px;padding:8px 12px;font-size:13.5px;margin-top:12px}
 </style></head><body>
 <header><div class="hdr"><div><a class="back" href="../">← 과목 선택</a><h1>__NAME__ 기출 퀴즈</h1><p>__SUB__</p></div>__PDF__</div></header>
 <main id="app"></main>
@@ -103,7 +107,7 @@ function trendsHtml(){const T=D.trends;if(!T)return'';
 function home(){
  const p=pool();const nv=D.q.filter(x=>x.v).length;
  const rep=M.ch.filter(c=>c.mode==='repeat').map(c=>c.prof);const unv=D.q.filter(x=>!x.ok).length,dr=D.q.filter(x=>x.ok&&x.vb==='초안').length;
- app.innerHTML=`${unv?`<div class="warn"><b>미검증</b> 문항 ${unv}개: 2026년 강의 자료가 아직 없어 복원 해설의 답을 그대로 실었습니다. 강의 자료가 올라오면 다시 검증합니다.</div>`:''}${dr?`<div class="warn" style="border-color:#3b6fb6;background:#eef3fb"><b>초안으로 검증됨</b> 문항 ${dr}개: 검안본이 올라오면 다시 확인합니다.</div>`:''}<div class="panel"><div class="lbl">파트 (2026 담당)</div><div class="row" id="chs">
+ app.innerHTML=`${mockPanel()}${unv?`<div class="warn"><b>미검증</b> 문항 ${unv}개: 2026년 강의 자료가 아직 없어 복원 해설의 답을 그대로 실었습니다. 강의 자료가 올라오면 다시 검증합니다.</div>`:''}${dr?`<div class="warn" style="border-color:#3b6fb6;background:#eef3fb"><b>초안으로 검증됨</b> 문항 ${dr}개: 검안본이 올라오면 다시 확인합니다.</div>`:''}<div class="panel"><div class="lbl">파트 (2026 담당)</div><div class="row" id="chs">
  <button class="chip ${st.chs.size===M.ch.length?'on':''}" data-all>전체</button>${M.ch.map(c=>`<button class="chip ${st.chs.has(c.id)?'on':''}" data-c="${c.id}" title="${esc(c.why||'')}">${esc(c.title.replace(/^[^.]+\.\s*/,''))} · ${esc(c.prof)} <small class="md ${isVary(c.mode)?'vary':''}">${MODEL[c.mode]||c.mode}</small></button>`).join('')}</div>
  ${YEARS.length>1?`<div class="lbl">출제 연도</div><div class="row">${YEARS.map(y=>`<button class="chip ${st.yrs.has(y)?'on':''}" data-y="${y}">${y}</button>`).join('')}</div>`:''}
  <div class="lbl">문제 종류</div><div class="row" id="kind">${[['all','기출+변형'],['past','기출(원본)만'],...(nv||hasGen?[['var','변형만']]:[]),['wrong',`오답노트 (${wrong.size+Object.keys(wdyn).length})`]].map(([k,t])=>`<button class="chip ${st.kind===k?'on':''}" data-k="${k}">${t}</button>`).join('')}</div>
@@ -122,6 +126,8 @@ function home(){
  app.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{st.mix=b.dataset.m==='true';LS.set('mix',st.mix);home()});
  app.querySelectorAll('[data-n]').forEach(b=>b.onclick=()=>{st.n=+b.dataset.n;home()});
  $('#start').onclick=()=>{run={q:build(),i:0,ans:{}};show()};
+ if(D.mock){$('#mock').onclick=()=>{run={q:mockBuild(),i:0,ans:{},perm:{},exam:true,mock:true,t0:Date.now()};examShow();scrollTo(0,0)};
+  const r=$('#mockre');if(r)r.onclick=()=>{const sv=LS.get('mock_run',null);run={...sv,q:sv.ids.map(id=>byId[id]),exam:true,mock:true};delete run.ids;examShow();scrollTo(0,0)}}
 }
 function baseTag(x){const b=byId[x.base];return b?`원본 ${b.keys.map(k=>`20${k.slice(0,2)} #${k.slice(3).replace('-1','')}`).join(', ')}`:(x.N||'')}
 /* 검증 표시: ok=false → 미검증, vb='초안'|'검안' → 그 자료로 검증, vb='교과서' → 강의 근거 없어 교과서·진료지침으로 확인, vb 없음(옛 데이터) → 검증 */
@@ -143,7 +149,7 @@ function show(){
  <div class="nav"><button class="ghost" id="home">처음으로</button><span><button class="ghost" id="prev" ${run.i?'':'disabled'}>이전</button> <button class="go" id="next" ${done?'':'disabled'}>${run.i+1<run.q.length?'다음':'결과 보기'}</button></span></div></div>`;
  app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;run.ans[x.id]=i;if(x.dyn){if(i===x.a)delete wdyn[x.id];else wdyn[x.id]=x;LS.set('wrong_dyn',wdyn)}else{if(i===x.a)wrong.delete(x.id);else wrong.add(x.id);LS.set('wrong',[...wrong])}show()});
  $('#home').onclick=home;$('#prev').onclick=()=>{run.i--;show()};
- $('#next').onclick=()=>{if(run.i+1<run.q.length){run.i++;show();scrollTo(0,0)}else result()};
+ $('#next').onclick=()=>{if(run.i+1<run.q.length){run.i++;show();scrollTo(0,0)}else(run.mock?mockResult():result())};
 }
 const nOk=()=>Object.entries(run.ans).filter(([id,v])=>right(run.q.find(q=>q.id===id),v)).length;
 function exFoot(x){return `${x.N&&!(x.pred&&x.N.startsWith('주관식 예상'))?`<div class="note">※ ${esc(x.N)}</div>`:''}${x.ok===false?(x.pred?'<div class="note">※ 미검증: 동기 정리본·교과서 기준 답이며 26 학습부와 대조하지 않았습니다.</div>':'<div class="note">※ 미검증: 복원 해설 기준 답입니다.</div>'):(x.vb==='초안'?'<div class="small">초안으로 검증됨 · 검안본이 올라오면 다시 확인합니다.</div>':(x.vb==='교과서'?'<div class="small">강의 자료에 근거가 없어 교과서·진료지침으로 확인함</div>':(x.vb?'<div class="small">검안으로 검증됨</div>':'')))}${x.B?`<div class="src">근거: ${esc(x.B)}</div>`:''}`}
@@ -164,7 +170,7 @@ function showS(x,a){const done=a!==undefined;
   ta.onkeydown=e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey))sub(ta.value.trim())}}
  app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{a.ok=b.dataset.g==='1';mark(x,a.ok);show()});
  $('#home').onclick=home;$('#prev').onclick=()=>{run.i--;show()};
- $('#next').onclick=()=>{if(run.i+1<run.q.length){run.i++;show();scrollTo(0,0)}else result()};
+ $('#next').onclick=()=>{if(run.i+1<run.q.length){run.i++;show();scrollTo(0,0)}else(run.mock?mockResult():result())};
 }
 function result(){
  const ok=run.q.filter(x=>right(x,run.ans[x.id]));const bad=run.q.filter(x=>!right(x,run.ans[x.id]));
@@ -175,5 +181,78 @@ function result(){
  if(bad.length){$('#retry').onclick=()=>{run={q:shuffle(bad),i:0,ans:{}};show()};
  app.querySelectorAll('.wl div').forEach(d=>d.onclick=()=>{run.i=run.q.findIndex(q=>q.id===d.dataset.id);show()})}
 }
+/* ── 모의시험 (D.mock = tools/mock.py의 출제 계획) ──
+   교수님별 문항 수(수업 시간 기준)·객관식/주관식 수·변형 비율에 맞춰 시작할 때마다 새로 뽑는다.
+   변형 문항이 모자라면 기출로, 기출이 모자라면 변형으로 채우고, 그래도 모자라면 다른 형식(객관식↔주관식)으로 채운다.
+   푸는 동안에는 정답을 보여 주지 않고, 제출하면 한꺼번에 채점한다. 진행 상황은 브라우저에 저장(mock_run)한다. */
+const PROF=Object.fromEntries(M.ch.map(c=>[c.id,c.prof]));
+const fmtT=ms=>{const m=Math.floor(ms/60000);return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`};
+function wpick(a,k){a=a.slice();const out=[];const w=x=>1+(Math.max(2019,...(x.y||[]))-2019)/2+.5*((x.y||[]).length-1);
+ while(out.length<k&&a.length){let t=a.reduce((s,x)=>s+w(x),0)*Math.random(),i=0;for(;i<a.length-1;i++){t-=w(a[i]);if(t<=0)break}out.push(a.splice(i,1)[0])}return out}
+function mockBuild(){const used=new Set(),out=[];
+ for(const r of D.mock.profs){const chs=new Set(r.ch);
+  const take=(s,k)=>{if(k<=0)return[];const f=x=>chs.has(x.ch)&&isS(x)===s&&!used.has(x.id)&&!x.dyn;
+   const vars=shuffle(D.q.filter(x=>x.v&&f(x))),past=D.q.filter(x=>!x.v&&f(x));
+   let sel=vars.slice(0,Math.min(vars.length,Math.round(k*r.vshare)));const bases=new Set(sel.map(x=>x.base));
+   sel=sel.concat(wpick(past.filter(x=>!bases.has(x.id)),k-sel.length));
+   if(sel.length<k)sel=sel.concat(vars.filter(x=>!sel.includes(x)).slice(0,k-sel.length));
+   if(sel.length<k)sel=sel.concat(wpick(past.filter(x=>!sel.includes(x)),k-sel.length));
+   sel.forEach(x=>used.add(x.id));return sel};
+  let m=take(false,r.nm),s=take(true,r.ns);
+  if(m.length<r.nm)s=s.concat(take(true,r.nm-m.length));if(s.length<r.ns)m=m.concat(take(false,r.ns-s.length));
+  out.push(...m,...s)}
+ return out}
+function mockPanel(){const P=D.mock;if(!P)return'';const sv=LS.get('mock_run',null);
+ const nm=P.profs.reduce((s,r)=>s+r.nm,0),ns=P.profs.reduce((s,r)=>s+r.ns,0);
+ const ex=P.profs.filter(r=>r.extra).map(r=>r.prof);
+ return `<div class="panel mock"><h2>모의시험 ${P.total}문항</h2><div class="small">올해 시험 문항 수(${P.total})를 시간표의 수업 시간(${P.hours}시간)에 맞춰 교수님별로 나눴습니다. 기본은 시간당 ${P.per_hour}문항${P.total!==P.hours*P.per_hour?`이고, 남는 ${P.total-P.hours*P.per_hour}문항은 수업이 많은 교수님(${esc(ex.join('·'))})께 1문항씩 더했습니다`:'입니다'}. 객관식·주관식 수는 교수님별 기출(${P.s_years.join('·')})의 주관식 비율을, 변형 문항 비율은 교수님별 기출 변형 정도를 따릅니다. 정답은 제출한 뒤 한꺼번에 확인합니다.</div>
+ <details><summary>교수님별 구성 보기 (객관식 ${nm} · 주관식 ${ns})</summary><table><tr><th>교수님 (강의)</th><th>수업</th><th>문항</th><th>객관식</th><th>주관식</th><th>변형</th></tr>
+ ${P.profs.map(r=>`<tr><td>${esc(r.prof)} <span class="small">(${r.lectures.map(n=>String(n).padStart(2,'0')).join('·')})</span></td><td>${r.hours}시간</td><td><b>${r.n}</b>${r.extra?'<span class="small">(+1)</span>':''}</td><td>${r.nm}</td><td>${r.ns}</td><td><span class="md ${isVary(r.mode)?'vary':''}">${MODEL[r.mode]||r.mode}</span> ${Math.round(r.vshare*100)}%</td></tr>`).join('')}</table>
+ <div class="small">변형 %는 목표치입니다. 그 교수님의 변형 문항이 모자라면 기출로 채웁니다(특히 객관식 변형은 아직 적습니다). 시간표: ${esc(P.timetable||'')}</div></details>
+ <div class="row" style="margin-top:10px;justify-content:flex-end">${sv?`<span class="small">진행 중: ${Object.keys(sv.ans||{}).length}/${sv.ids.length}문항 답함</span><button class="ghost" id="mockre">이어 풀기</button>`:''}<button class="go" id="mock">${sv?'새로 시작':'모의시험 시작'}</button></div></div>`}
+const answered=(x,a)=>isS(x)?!!(a&&a.txt&&a.txt.trim()):a!==undefined;
+function saveMock(){LS.set('mock_run',{ids:run.q.map(x=>x.id),ans:run.ans,perm:run.perm,i:run.i,t0:run.t0})}
+function examShow(){const x=run.q[run.i],a=run.ans[x.id],N=run.q.length;saveMock();
+ if(!run.perm[x.id]&&!isS(x))run.perm[x.id]=st.mix?shuffle(x.o.map((_,i)=>i)):x.o.map((_,i)=>i);
+ const P=run.perm[x.id]||[];const nA=run.q.filter(q=>answered(q,run.ans[q.id])).length;
+ app.innerHTML=`<div class="panel"><div class="top"><span><b>${run.i+1}</b> / ${N} · ${esc(PROF[x.ch])} 교수님</span><span>답함 ${nA}/${N} · <span id="clk">${fmtT(Date.now()-run.t0)}</span></span></div>
+ <div class="bar"><i style="width:${nA/N*100}%"></i></div>
+ <div class="tags">${isS(x)?'<span class="s">주관식</span>':'<span class="g">객관식</span>'}</div><div class="stem">${x.stem}</div>
+ ${(x.img||[]).map(s=>`<div class="img"><img src="${s}" alt="문항 그림"></div>`).join('')}
+ ${isS(x)?`<div class="sa"><textarea id="sa" placeholder="답을 적으세요 (한글·영어 모두 가능)">${esc((a&&a.txt)||'')}</textarea></div>`
+ :`<div>${P.map((i,pos)=>`<button class="opt ${a===i?'sel':''}" data-i="${i}"><b>${CIR[pos]}</b>${esc(x.o[i])}</button>`).join('')}</div>`}
+ <div class="nav"><button class="ghost" id="home">나가기 (저장됨)</button><span><button class="ghost" id="prev" ${run.i?'':'disabled'}>이전</button> ${run.i+1<N?'<button class="go" id="next">다음</button>':''} <button class="${run.i+1<N?'ghost':'go'}" id="sub">제출</button></span></div>
+ <details ${run.grid?'open':''} id="gd"><summary class="small" style="cursor:pointer;margin-top:10px">문항 번호표</summary><div class="grid">${run.q.map((q,j)=>`<button class="${answered(q,run.ans[q.id])?'a':''} ${j===run.i?'cur':''}" data-j="${j}" title="${esc(PROF[q.ch])}">${j+1}</button>`).join('')}</div></details>
+ <div id="cf"></div></div>`;
+ const go=j=>{run.i=j;examShow();scrollTo(0,0)};
+ app.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{run.ans[x.id]=+b.dataset.i;examShow()});
+ const ta=$('#sa');if(ta)ta.oninput=()=>{run.ans[x.id]={txt:ta.value};saveMock()};
+ $('#gd').ontoggle=e=>{run.grid=e.target.open};
+ app.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>go(+b.dataset.j));
+ $('#home').onclick=()=>{run=null;home()};$('#prev').onclick=()=>go(run.i-1);if($('#next'))$('#next').onclick=()=>go(run.i+1);
+ $('#sub').onclick=()=>{const left=run.q.map((q,j)=>[q,j]).filter(([q])=>!answered(q,run.ans[q.id]));
+  $('#cf').innerHTML=`<div class="sub">${left.length?`아직 답하지 않은 문항이 <b>${left.length}개</b> 있습니다 (${left.slice(0,15).map(([,j])=>j+1).join(', ')}${left.length>15?' …':''}). `:'모든 문항에 답했습니다. '}제출하면 채점하고 해설을 볼 수 있습니다.
+  <div class="row" style="margin-top:8px;justify-content:flex-end"><button class="ghost" id="cfno">계속 풀기</button><button class="go" id="cfok">제출하기</button></div></div>`;
+  $('#cfno').onclick=()=>{$('#cf').innerHTML=''};$('#cfok').onclick=submitMock;$('#cf').scrollIntoView({block:'nearest'})}}
+setInterval(()=>{const c=document.getElementById('clk');if(c&&run&&run.exam)c.textContent=fmtT(Date.now()-run.t0)},20000);
+function submitMock(){run.t1=Date.now();
+ for(const x of run.q){const a=run.ans[x.id];
+  /* 오답노트에는 답한 문항만 반영(안 푼 문항까지 넣으면 중간에 그만둔 시험이 오답노트를 채운다) */
+  if(isS(x)){const t=((a&&a.txt)||'').trim(),au=autoGrade(x,t);run.ans[x.id]={txt:t,auto:au,ok:au===true};if(t)mark(x,au===true)}
+  else if(a===undefined)run.ans[x.id]=-1;else mark(x,a===x.a)}
+ run.exam=false;try{localStorage.removeItem(K('mock_run'))}catch(e){}mockResult();scrollTo(0,0)}
+function mockResult(){const R=run.q.map((x,j)=>({x,j,ok:right(x,run.ans[x.id])}));const ok=R.filter(r=>r.ok).length;
+ const rows=D.mock.profs.map(p=>{const qs=R.filter(r=>p.ch.includes(r.x.ch));const f=s=>qs.filter(r=>isS(r.x)===s);
+  return `<tr><td>${esc(p.prof)}</td><td><b>${qs.filter(r=>r.ok).length}</b>/${qs.length}</td><td>${f(false).filter(r=>r.ok).length}/${f(false).length}</td><td>${f(true).filter(r=>r.ok).length}/${f(true).length}</td><td>${qs.filter(r=>r.x.v).length}</td></tr>`}).join('');
+ const nv=R.filter(r=>r.x.v).length,ns=R.filter(r=>isS(r.x)),sAuto=ns.filter(r=>run.ans[r.x.id].auto===null).length;
+ app.innerHTML=`<div class="panel mock"><h2>모의시험 결과</h2><div class="score">${ok} / ${run.q.length} <span class="small">(${Math.round(ok/run.q.length*100)}점 환산)</span></div>
+ <div class="small">걸린 시간 ${fmtT((run.t1||Date.now())-run.t0)} · 변형 문항 ${nv}개 포함 · 주관식은 자동 채점이라 철자·표현 차이로 틀림 처리될 수 있습니다${sAuto?` (여러 항목을 쓰는 ${sAuto}문항은 직접 채점해 주세요)`:''}. 번호를 눌러 해설을 보고 맞음/틀림을 바꾸면 점수에 반영됩니다.</div>
+ <table><tr><th>교수님</th><th>전체</th><th>객관식</th><th>주관식</th><th>변형</th></tr>${rows}</table>
+ <div class="grid">${R.map(r=>`<button class="${r.ok?'ok':'bad'}" data-j="${r.j}" title="${esc(PROF[r.x.ch])}">${r.j+1}</button>`).join('')}</div>
+ <div class="nav"><button class="ghost" id="home">처음으로</button><span><button class="ghost" id="rv">1번부터 해설 보기</button> ${R.length>ok?'<button class="ghost" id="retry">틀린 문제만 다시</button>':''} <button class="go" id="again">새 모의시험</button></span></div></div>`;
+ app.querySelectorAll('[data-j]').forEach(b=>b.onclick=()=>{run.i=+b.dataset.j;show();scrollTo(0,0)});
+ $('#home').onclick=home;$('#rv').onclick=()=>{run.i=0;show();scrollTo(0,0)};
+ $('#again').onclick=()=>{run={q:mockBuild(),i:0,ans:{},perm:{},exam:true,mock:true,t0:Date.now()};examShow();scrollTo(0,0)};
+ if($('#retry'))$('#retry').onclick=()=>{run={q:R.filter(r=>!r.ok).map(r=>r.x),i:0,ans:{}};show();scrollTo(0,0)}}
 home();
 </script></body></html>
